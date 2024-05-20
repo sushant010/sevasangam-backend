@@ -17,7 +17,7 @@ export const isSignin = async (req, res, next) => {
     if (!decode) {
       return res
         .status(401)
-        .send({ success: false, message: "Unauthorised Access!" });
+        .send({ success: false, message: "Unauthorised Access! Token doesn't qualify" });
     }
     req.user = decode;
     return next();
@@ -50,7 +50,7 @@ export const isSuperAdmin = async (req, res, next) => {
     if (existingUser.role !== 2) {
       return res
         .status(201)
-        .send({ success: false, message: "Unauthorised Access!" });
+        .send({ success: false, message: "Unauthorised Access! Not a Superadmin", id: existingUser.role });
     } else {
       return next();
     }

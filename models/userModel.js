@@ -18,15 +18,24 @@ const userSchema = new Schema({
   },
   phone: {
     type: String,
-    required: true,
+    required: false,
   },
   role: {
     type: Number,
     default: 0,
   },
+  totalTempleCreated: {
+    type: Number,
+    default: 0,
+    required: false,
+  },
   isEmailVerified: {
     type: Boolean,
     default: false,
-  }
+  },
+  createdOn: {
+    type: Date,
+    default: Date.now,
+  },
 });
 export default mongoose.model("User", userSchema);

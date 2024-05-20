@@ -16,6 +16,11 @@ const templeSchema = new Schema({
     createdBy: {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        required: false
+    },
+    donation: {
+        type: Number,
+        default: 0,
         required: true
     },
     contactPerson: {
@@ -33,19 +38,23 @@ const templeSchema = new Schema({
         }
 
     },
+    createdOn: {
+        type: Date,
+        default: Date.now,
+    },
     location: {
         address: {
             type: String,
-            required: true
+            required: false
         },
         country: {
             type: String,
-            required: true
+            required: false
         }
     },
     images: {
-        logo: { type: String, required: true }, // store file paths or URLs
-        templeBannerImage: { type: [String], required: true }, // store file paths or URLs
+        logo: { type: String, required: false }, // store file paths or URLs
+        templeBannerImage: { type: String, required: false }, // store file paths or URLs
         templeImages: { type: [String], required: false } // store file paths or URLs
     },
     bankDetails: {
@@ -65,18 +74,22 @@ const templeSchema = new Schema({
         type: String,
         required: false
     },
+    isVerified: {
+        type: Number,
+        default: 0
+    },
     socialMedia: {
         facebook: { type: String, required: false },
         twitter: { type: String, required: false },
         instagram: { type: String, required: false },
         // Add other social media links as nefalse
     },
-    upcomingEvents: [{
-        name: { type: String, required: false },
-        description: { type: String, required: false },
-        timing: { type: String, required: false },
-        images: { type: [String], required: false } // array of image paths or URLs
-    }]  // array of objects
+    // upcomingEvents: [{
+    //     name: { type: String, required: false },
+    //     description: { type: String, required: false },
+    //     timing: { type: String, required: false },
+    //     images: { type: [String], required: false } // array of image paths or URLs
+    // }]  // array of objects
 });
 
 
