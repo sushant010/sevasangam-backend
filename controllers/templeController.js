@@ -144,6 +144,9 @@ export const updateTempleById = async (req, res) => {
 export const deleteTempleById = async (req, res) => {
   try {
     const temple = await Temple.findByIdAndDelete(req.params.id);
+    const userWhoCreated = await userModel.findOne({ _id: temple.createdBy });
+    userWhoCreated.totalTempleCreated -= 1;
+    await userWhoCreated.save();
     if (!temple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
     }
@@ -188,3 +191,49 @@ export const getUnverifiedTemples = async (req, res) => {
   }
 
 }
+export const getFilteredTemples = async (req, res) => {
+  try {
+    const {
+      templeName,
+      typeOfOrganization,
+      address,
+      isVerified,
+      sortOption,
+      state,
+      city
+    } = req.body;
+
+    let query = {};
+
+    if (templeName) query.templeName = { $regex: templeName, $options: 'i' };
+    if (typeOfOrganization) query.typeOfOrganization = { $regex: typeOfOrganization, $options: 'i' };
+    if (address) {
+      query.$or = [
+        { 'location.address': { $regex: address, $options: 'i' } },
+        { 'location.country': { $regex: address, $options: 'i' } },
+        { 'location.state': { $regex: address, $options: 'i' } },
+        { 'location.city': { $regex: address, $options: 'i' } }
+      ];
+    }
+    if (isVerified) query.isVerified = isVerified === '1';
+    if (state) query['location.state'] = state;
+    if (city) query['location.city'] = city;
+
+    let sort = {};
+    if (sortOption) {
+      if (sortOption === 'mostPopular') {
+        sort.donation = -1; // Assuming 'donation' is a field representing popularity
+      } else if (sortOption === 'recentlyAdded') {
+        sort.createdOn = -1;
+      }
+    }
+
+    const temples = await Temple.find(query).populate('createdBy').sort(sort);
+
+    res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+

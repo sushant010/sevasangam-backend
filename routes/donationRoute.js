@@ -4,10 +4,20 @@ import {
     getDonations,
     getDonationById,
     updateDonation,
-    deleteDonation
+    deleteDonation,
+    checkout,
+    paymentVerification
 } from '../controllers/donationController.js';
 
 const router = express.Router();
+
+
+// Create a donation
+router.post('/checkout', checkout);
+
+router.post('/payment-verification', paymentVerification);
+
+
 
 // Create a donation
 router.post('/create-donation', createDonation);

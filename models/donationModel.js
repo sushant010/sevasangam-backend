@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const donationSchema = new Schema({
     amount: {
         type: Number,
-        required: true,
+        required: false,
     },
     date: {
         type: Date,
@@ -14,28 +14,35 @@ const donationSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        required: false,
     },
     temple: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Temple',
-        required: true,
+        required: false,
     },
     paymentMethod: {
         type: String,
-        required: true,
+        required: false,
         enum: ['credit card', 'debit card', 'paypal', 'bank transfer'],
-    },
-    transactionId: {
-        type: String,
-        required: true,
-        unique: true,
     },
     status: {
         type: String,
-        required: true,
+        required: false,
         enum: ['pending', 'completed', 'failed'],
         default: 'pending',
+    },
+    razorpay_order_id: {
+        type: String,
+        required: true,
+    },
+    razorpay_payment_id: {
+        type: String,
+        required: true,
+    },
+    razorpay_signature: {
+        type: String,
+        required: true,
     },
 });
 

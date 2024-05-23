@@ -24,7 +24,6 @@ app.use(express.urlencoded({ extended: false }));
 // mongodb connect
 mongoConnect();
 
-
 const __filename = fileURLToPath(import.meta.url)
 
 const __dirname = path.dirname(__filename)

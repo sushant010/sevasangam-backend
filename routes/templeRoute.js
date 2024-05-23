@@ -7,7 +7,8 @@ import {
   deleteTempleById,
   getAllTemplesByAdmin,
   getAllTemplesByAdminForTimerange,
-  getUnverifiedTemples
+  getUnverifiedTemples,
+  getFilteredTemples
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../helpers/upload.js';
@@ -33,6 +34,8 @@ router.delete('/delete-temple/:id', deleteTempleById);
 
 // get all temples by an admin
 router.post('/get-temples-by-admin', getAllTemplesByAdmin);
+
+router.post('/filter-temples', getFilteredTemples)
 
 // get all temples by an admin for a timerange
 router.post('/get-temples-by-admin-with-timerange', getAllTemplesByAdminForTimerange);
