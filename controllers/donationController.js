@@ -21,6 +21,22 @@ export const checkout = async (req, res) => {
 
 }
 
+export const subscription = async (req, res) => {
+    try {
+        const subscription = await instance.subscriptions.create({
+            plan_id: req.body.plan_id,
+            total_count: req.body.total_count,
+            customer_notify: req.body.customer_notify,
+            amount: req.body.amount,
+            start_at: req.body.start_at
+        });
+        res.json({ success: true, subscription });
+    } catch (error) {
+        console.error('Error creating subscription:', error);
+        res.status(500).json({ success: false, message: 'Failed to create subscription' });
+    }
+}
+
 export const paymentVerification = async (req, res) => {
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -55,6 +71,8 @@ export const paymentVerification = async (req, res) => {
         });
     }
 }
+
+
 
 
 // Create a donation

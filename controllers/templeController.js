@@ -191,6 +191,7 @@ export const getUnverifiedTemples = async (req, res) => {
   }
 
 }
+
 export const getFilteredTemples = async (req, res) => {
   try {
     const {
@@ -201,7 +202,7 @@ export const getFilteredTemples = async (req, res) => {
       sortOption,
       state,
       city
-    } = req.body;
+    } = req.body; // Note: Using `req.query` for GET requests
 
     let query = {};
 
@@ -235,5 +236,6 @@ export const getFilteredTemples = async (req, res) => {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
+
 
 
