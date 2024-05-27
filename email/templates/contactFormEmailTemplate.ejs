@@ -1,0 +1,35 @@
+<!-- create email termplate -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Contact Form Email</title>
+  </head>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap");
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</html>
+
+<body>
+  <h1>Contact Information</h1>
+  <p>Tittle: <%= tittle %></p>
+  <p>Email: <%= email %></p>
+  <p>Message: <%= message %></p>
+</body>

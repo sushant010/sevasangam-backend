@@ -8,6 +8,8 @@ import mongoConnect from './config/db.js'
 import authRoute from './routes/authRoute.js'
 import templeRoute from './routes/templeRoute.js'
 import donationRoute from './routes/donationRoute.js'
+import contactRoute from './routes/contactRoute.js'
+import subscriptionEmailRoute from './routes/subscriptionEmailRoute.js'
 // import categoryRoute from './routes/categoryRoute.js'
 // import productRoute from './routes/productRoute.js'
 import { fileURLToPath } from 'url'
@@ -51,6 +53,8 @@ app.use('/api/v1/auth', authRoute)
 app.use('/api/v1/temple', templeRoute);
 
 app.use('/api/v1/donation', donationRoute);
+app.use('/api/v1/contact', contactRoute)
+app.use('/api/v1/subscriptionEmail', subscriptionEmailRoute)
 
 // app.use('/api/v1/category', categoryRoute)
 
