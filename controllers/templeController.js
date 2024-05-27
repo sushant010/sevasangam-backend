@@ -1,28 +1,25 @@
 import Temple from '../models/templeModel.js';
 import userModel from '../models/userModel.js';
+import cloudinary from '../config/cloudinary.js';
 
-// Create a new temple
+
 export const createTemple = async (req, res) => {
   try {
     const { body, files } = req;
     const parsedBody = {};
 
-    // Iterate through keys of req.body
     Object.keys(body).forEach(key => {
-      // Check if key contains a period (indicating nested key)
       if (key.includes('.')) {
-        const [parentKey, childKey] = key.split('.'); // Split key into parent and child keys
-        parsedBody[parentKey] = parsedBody[parentKey] || {}; // Ensure parent key exists in parsed body
-        parsedBody[parentKey][childKey] = body[key]; // Assign value to nested object
+        const [parentKey, childKey] = key.split('.');
+        parsedBody[parentKey] = parsedBody[parentKey] || {};
+        parsedBody[parentKey][childKey] = body[key];
       } else {
-        parsedBody[key] = body[key]; // Assign value to top-level key
+        parsedBody[key] = body[key];
       }
     });
 
-
     const { templeName, location, createdBy } = parsedBody;
     const { address } = location;
-
 
     if (!templeName || !address) {
       return res.status(400).send({ success: false, message: 'Temple name and address are required' });
@@ -30,44 +27,43 @@ export const createTemple = async (req, res) => {
 
     const existingTemple = await Temple.findOne({
       templeName,
-      'location.address': address,
+      'location.address': location.address,
     });
 
     if (existingTemple) {
       return res.status(200).send({ success: false, message: 'Temple already exists at this location!' });
     }
 
-
-    // Process file paths
     const images = {};
-    if (files['images.logo']) {
-      images.logo = files['images.logo'][0].path;
+    if (files.logo) {
+      images.logo = files.logo[0].path;
     }
-    if (files['images.templeBannerImage']) {
-      images.templeBannerImage = files['images.templeBannerImage'][0].path;
+    if (files.bannerImage) {
+      images.bannerImage = files.bannerImage[0].path;
     }
-    if (files['images.templeImages']) {
-      images.templeImages = files['images.templeImages'].map((file) => file.path);
+    if (files.otherImages) {
+      images.otherImages = files.otherImages.map(file => file.path);
     }
 
-    const userWhoCreated = await userModel.findOne({ _id: createdBy });
+    const userWhoCreated = await userModel.findOne({ _id: parsedBody.createdBy });
     if (!userWhoCreated) {
       return res.status(404).send({ success: false, message: 'User not found' });
     }
 
     userWhoCreated.totalTempleCreated += 1;
-    userWhoCreated.role = 1;
     await userWhoCreated.save();
 
+    const isVerified = userWhoCreated.role === 2 ? 1 : 0;
+
     const newTemple = new Temple({
-      ...body,
+      ...parsedBody,
       images,
+      isVerified,
+      pendingChanges: isVerified === 1 ? null : { ...parsedBody, images }
     });
 
     await newTemple.save();
-    res
-      .status(201)
-      .send({ success: true, message: 'Temple created successfully', data: newTemple });
+    res.status(201).send({ success: true, message: isVerified === 1 ? 'Temple created successfully' : "Temple submitted for review", data: newTemple });
   } catch (error) {
     console.error(error);
     res.status(500).send({
@@ -77,36 +73,27 @@ export const createTemple = async (req, res) => {
   }
 };
 
-// Get all temples
-export const getAllTemples = async (req, res) => {
-  try {
-    const temples = await Temple.find().populate('createdBy');
-    const count = temples.length;
-    res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
-  } catch (error) {
-    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
-  }
-};
 
-// Get a single temple by ID
-export const getTempleById = async (req, res) => {
-  try {
-    const temple = await Temple.findById(req.params.id).populate('createdBy');
-    if (!temple) {
-      return res.status(404).send({ success: false, message: 'Temple not found' });
-    }
-    res.status(200).send({ success: true, message: 'Temple retrieved successfully', data: temple });
-  } catch (error) {
-    res.status(500).send({ success: false, message: 'Failed to retrieve temple', error });
-  }
-};
 
-// Update a temple by ID
+
 export const updateTempleById = async (req, res) => {
   try {
     const { body, files } = req;
+    const parsedBody = {};
 
-    // Process file paths
+    // Parse the body to handle nested fields
+    Object.keys(body).forEach(key => {
+      if (key.includes('.')) {
+        const [parentKey, childKey] = key.split('.');
+        parsedBody[parentKey] = parsedBody[parentKey] || {};
+        parsedBody[parentKey][childKey] = body[key];
+      } else {
+        parsedBody[key] = body[key];
+      }
+    });
+
+    const { templeName, location, createdBy } = parsedBody;
+
     const images = {};
     if (files) {
       if (files['images.logo']) {
@@ -120,24 +107,103 @@ export const updateTempleById = async (req, res) => {
       }
     }
 
-    // Update each subfield of the images object individually
-    const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, {
-      ...body,
-      'images.logo': images.logo || body.images.logo,
-      'images.templeBannerImage': images.templeBannerImage || body.images.templeBannerImage,
-      'images.templeImages': images.templeImages || body.images.templeImages,
-    }, { new: true, runValidators: true });
+    // Find the existing temple
+    const existingTemple = await Temple.findById(req.params.id);
 
-    if (!updatedTemple) {
+    if (!existingTemple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
     }
 
-    res.status(200).send({ success: true, message: 'Temple updated successfully', data: updatedTemple });
+    // Compare updated fields with previous fields
+    const updatedFields = {};
+    Object.keys(parsedBody).forEach(key => {
+      // Check if the field has changed
+      const existingValue = existingTemple[key];
+      const newValue = parsedBody[key];
+
+      if (JSON.stringify(existingValue) !== JSON.stringify(newValue)) {
+        updatedFields[key] = newValue;
+      }
+    });
+
+    // Prepare updated data
+    const updatedData = {
+      ...existingTemple.toObject(),
+      ...updatedFields,
+      images: {
+        ...existingTemple.images,
+        ...images
+      }
+    };
+
+    let update;
+    if (createdBy.role === 2) {
+      // Directly verify if created by superadmin
+      update = { ...updatedData, isVerified: 1, isCreated: 0, pendingChanges: null };
+    } else {
+
+      const mergedPendingChanges = {
+        ...existingTemple.pendingChanges,
+        ...updatedFields,
+        images: {
+          ...existingTemple.pendingChanges?.images,
+          ...images
+        }
+      };
+      update = { pendingChanges: mergedPendingChanges, isVerified: 0, isCreated: 0 };
+    }
+
+    // Update the temple
+    const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
+
+    res.status(200).send({ success: true, message: createdBy.role == 2 ? 'Temple updated successfully' : "Temple submitted for review", data: updatedTemple });
   } catch (error) {
     console.error(error);
     res.status(400).send({ success: false, message: 'Failed to update temple', error });
   }
 };
+
+
+
+// Get all temples
+export const getAllTemples = async (req, res) => {
+  try {
+    const temples = await Temple.find({ isVerified: 1 }).populate('createdBy');
+    const count = temples.length;
+    res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+// Get a single temple by ID
+export const getTempleById = async (req, res) => {
+  try {
+    const temple = await Temple.findById(req.params.id);
+    if (!temple) {
+      return res.status(404).send({ success: false, message: 'Temple not found' });
+    }
+    res.status(200).send({ success: true, message: 'Temple retrieved successfully', data: temple });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temple', error });
+  }
+};
+
+
+// Get a single temple by Name
+export const getTempleByName = async (req, res) => {
+  try {
+    const decodedName = decodeURIComponent(req.params.name);
+    const temple = await Temple.findOne({ templeName: decodedName });
+    if (!temple) {
+      return res.status(404).send({ success: false, message: 'Temple not found' });
+    }
+    res.status(200).send({ success: true, message: 'Temple retrieved successfully', data: temple });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temple', error });
+  }
+};
+
 
 
 // Delete a temple by ID
@@ -170,20 +236,21 @@ export const getAllTemplesByAdmin = async (req, res) => {
 };
 
 // Get all temples created by a user of a time range
-export const getAllTemplesByAdminForTimerange = async (req, res) => {
-  try {
-    const temples = await Temple.find().populate('createdBy').where('createdBy', req.user._id).where('createdAt').gte(req.query.startDate).lte(req.query.endDate);
-    const count = temples.length;
-    res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
-  } catch (error) {
-    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
-  }
-};
+// export const getAllTemplesByAdminForTimerange = async (req, res) => {
+//   try {
+//     const temples = await Temple.find().populate('createdBy').where('createdBy', req.user._id).where('createdAt').gte(req.query.startDate).lte(req.query.endDate);
+//     const count = temples.length;
+//     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
+//   } catch (error) {
+//     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+//   }
+// };
 
-export const getUnverifiedTemples = async (req, res) => {
+
+export const getUnverifiedNewlyCreatedTemples = async (req, res) => {
 
   try {
-    const temples = await Temple.find({ isVerified: false }).populate('createdBy');
+    const temples = await Temple.find({ isVerified: 0, isCreated: 1 }).populate('createdBy');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -191,6 +258,42 @@ export const getUnverifiedTemples = async (req, res) => {
   }
 
 }
+
+export const getUnverifiedUpdatedByAdminTemples = async (req, res) => {
+
+  try {
+    const temples = await Temple.find({ isVerified: 0, isCreated: 0 }).populate('createdBy');
+    const count = temples.length;
+    res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+
+}
+
+
+export const verifyTemple = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const temple = await Temple.findById(id);
+    if (temple.pendingChanges) {
+      // Apply pending changes
+      Object.assign(temple, temple.pendingChanges, { pendingChanges: null, isVerified: 1 });
+    } else {
+      temple.isVerified = 1;
+    }
+
+    const updatedTemple = await temple.save();
+
+    res.status(200).send({ success: true, message: 'Pending changes approved and temple verified successfully', data: { temple: updatedTemple } });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to approve pending changes', error });
+  }
+}
+
+
+
+
 
 export const getFilteredTemples = async (req, res) => {
   try {
@@ -203,6 +306,10 @@ export const getFilteredTemples = async (req, res) => {
       state,
       city
     } = req.body; // Note: Using `req.query` for GET requests
+
+    const page = parseInt(req.body.page) || 1; // Parse page number from request body, default to 1 if not provided
+
+    const limit = req.body.limit ? req.body.limit : 4; // Number of temples to fetch per page
 
     let query = {};
 
@@ -229,13 +336,100 @@ export const getFilteredTemples = async (req, res) => {
       }
     }
 
-    const temples = await Temple.find(query).populate('createdBy').sort(sort);
+    const temples = await Temple.find({ ...query, isVerified: 1 })
+      .populate('createdBy')
+      .sort(sort)
+      .skip((page - 1) * limit) // Skip the required number of documents
+      .limit(limit); // Limit the number of documents returned per page
 
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
+
+
+// Reject a temple
+export const rejectTemple = async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    const temple = await Temple.findByIdAndUpdate(id, {
+      pendingChanges: null,
+      isVerified: 1
+    }, { new: true });
+
+    if (!temple) {
+      return res.status(404).send({ success: false, message: 'Temple not found' });
+    }
+
+    res.status(200).send({ success: true, message: 'Temple rejected successfully', data: temple });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to reject temple', error });
+  }
+};
+
+
+
+export const reviewPendingChanges = async (req, res) => {
+  try {
+    const temple = await Temple.findById(req.params.id);
+
+    if (!temple) {
+      return res.status(404).send({ success: false, message: 'Temple not found' });
+    }
+
+    if (!temple.pendingChanges) {
+      return res.status(200).send({ success: false, message: 'No pending changes for this temple' });
+    }
+
+    res.status(200).send({ success: true, message: 'Pending changes retrieved successfully', data: temple.pendingChanges });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve pending changes', error });
+  }
+};
+
+export const getSearchSuggestionTempleName = async (req, res) => {
+  const { search } = req.query;
+  if (!search) {
+    return res.status(400).send({ success: false, message: 'Search term is required' });
+  }
+
+  try {
+    const temples = await Temple.find({
+      templeName: { $regex: search, $options: 'i' }
+    }).limit(10); // Limit to 10 suggestions
+    res.send({ success: true, data: temples });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Error fetching suggestions', error });
+  }
+
+}
+
+
+
+export const getSimilarTemples = async (req, res) => {
+  try {
+    const id = req.params.id // Note: Using `req.query` for GET requests
+
+    const limit = req.body.limit ? req.body.limit : 4; // Number of temples to fetch per page
+
+    const refTemple = await Temple.findById(id);
+
+
+    const typeOfOrganization = refTemple.typeOfOrganization;
+    console.log(typeOfOrganization)
+
+    const temples = await Temple.find({ typeOfOrganization }).populate('createdBy').limit(limit);
+    // Limit the number of documents returned per page
+
+    res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+
 
 
 

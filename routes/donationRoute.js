@@ -7,7 +7,8 @@ import {
     deleteDonation,
     checkout,
     paymentVerification,
-    subscription
+    subscription,
+    fetchAllDonations
 } from '../controllers/donationController.js';
 
 const router = express.Router();
@@ -17,6 +18,11 @@ const router = express.Router();
 router.post('/checkout', checkout);
 
 router.post('/payment-verification', paymentVerification);
+
+router.post('/fetch-all-donation', fetchAllDonations);
+
+
+
 
 router.post('/subscription', subscription);
 
