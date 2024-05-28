@@ -52,6 +52,7 @@ export const loginController = async (req, res) => {
         if (!checkComparePassword) {
             return res.send({ error: 'Wrong Credentials!' })
         }
+        console.log(user)
         const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         return res.status(201).send({ success: true, message: 'Logged in Successfully', user, token })
 

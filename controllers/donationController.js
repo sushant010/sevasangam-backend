@@ -173,19 +173,59 @@ export const fetchAllDonations = async (req, res) => {
 
 
 export const subscription = async (req, res) => {
+    console.log(req.body)
+    const amount = req.body.amount;
+    const userId = req.user._id;
+    const currency = req.body.currency;
+
+    //create razorpay plan
+
     try {
-        const subscription = await instance.subscriptions.create({
-            plan_id: req.body.plan_id,
-            total_count: req.body.total_count,
-            customer_notify: req.body.customer_notify,
-            amount: req.body.amount,
-            start_at: req.body.start_at
+        const plan = await instance.plans.create({
+           period: 'monthly',
+              interval: 1,
+              "item":{
+                name : userId + ' ' + amount + ' ' + currency + ' ' + new Date().getTime(),
+                amount: amount,
+                currency: currency,
+                "description": "Monthly subscription plan for user " + userId + " with amount " + amount + " and currency " + currency + " at " + new Date().getTime(),
+
+              }
         });
+        // console.log(plan)
+
+        // res.json({ success: true, plan });
+
+        //create razorpay subscription
+        const subscription = await instance.subscriptions.create({
+            plan_id: plan.id,
+            total_count: 30,
+            customer_notify: 1,
+        });
+        console.log(subscription)
+
         res.json({ success: true, subscription });
+
+        
     } catch (error) {
-        console.error('Error creating subscription:', error);
-        res.status(500).json({ success: false, message: 'Failed to create subscription' });
+        console.log(error)
+        res.status(500).json({ success: false, message: 'Failed to create plan' });
+        
     }
+
+    // try {
+    //     const subscription = await instance.subscriptions.create({
+    //         plan_id: req.body.plan_id,
+    //         total_count: req.body.total_count,
+    //         customer_notify: req.body.customer_notify,
+    //         amount: req.body.amount,
+    //         start_at: req.body.start_at
+    //     });
+    //     res.json({ success: true, subscription });
+    // } catch (error) {
+    //     console.error('Error creating subscription:', error);
+    //     res.status(500).json({ success: false, message: 'Failed to create subscription' });
+    // }
 }
 
 

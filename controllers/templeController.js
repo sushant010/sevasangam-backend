@@ -167,11 +167,15 @@ export const updateTempleById = async (req, res) => {
 
 // Get all temples
 export const getAllTemples = async (req, res) => {
+  console.log("getAllTemples")
   try {
     const temples = await Temple.find({ isVerified: 1 }).populate('createdBy');
+    // .populate('createdBy');
+    console.log(temples)
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
+    console.log(error)
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
@@ -307,6 +311,9 @@ export const getFilteredTemples = async (req, res) => {
       city
     } = req.body; // Note: Using `req.query` for GET requests
 
+    //remove empty strings
+    Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
+
     const page = parseInt(req.body.page) || 1; // Parse page number from request body, default to 1 if not provided
 
     const limit = req.body.limit ? req.body.limit : 4; // Number of temples to fetch per page
@@ -336,11 +343,22 @@ export const getFilteredTemples = async (req, res) => {
       }
     }
 
-    const temples = await Temple.find({ ...query, isVerified: 1 })
+    // const temples = await Temple.find({ isVerified: 1 })
+    //   .populate('createdBy')
+    //   .sort(sort)
+      // .skip((page - 1) * limit) // Skip the required number of documents
+      // .limit(limit); // Limit the number of documents returned per page
+
+      const temples = await Temple.find({
+        isVerified:1,
+        ...query
+      })
       .populate('createdBy')
       .sort(sort)
       .skip((page - 1) * limit) // Skip the required number of documents
       .limit(limit); // Limit the number of documents returned per page
+
+      console.log(temples)
 
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
   } catch (error) {

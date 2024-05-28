@@ -1,10 +1,9 @@
-import { Router } from "express";
 import subscriptionEmailModel from "../models/subscriptionEmailModel.js";
-import { isSignin, isSuperAdmin } from "../middlewares/authMiddleware.js";
 
-const subscriptionEmailRouter = Router();
 
-subscriptionEmailRouter.post("/subscribe", async (req, res) => {
+// subscriptionEmailRouter.post("/subscribe", async (req, res) => {
+
+export const subscribe = async (req, res) => {
   if (!req.body) {
     return res.status(404).json({ message: "No data provided" });
   }
@@ -23,12 +22,15 @@ subscriptionEmailRouter.post("/subscribe", async (req, res) => {
     console.log(error);
     res.status(500).json({ message: "Error subscribing email" });
   }
-});
+}
+// });
 
-subscriptionEmailRouter.post(
-  "/getallSubscriptionEmails",
-  isSignin,
-  isSuperAdmin,
+// subscriptionEmailRouter.post(
+//   "/getallSubscriptionEmails",
+//   isSignin,
+//   isSuperAdmin,
+
+export const getallSubscriptionEmails =
   async (req, res) => {
     try {
       const subscriptionEmails = await subscriptionEmailModel.find();
@@ -38,6 +40,5 @@ subscriptionEmailRouter.post(
       res.status(500).json({ message: "Error getting subscription emails" });
     }
   }
-);
+// );
 
-export default subscriptionEmailRouter;
