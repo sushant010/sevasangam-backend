@@ -54,8 +54,8 @@ const templeSchema = new Schema({
     },
     images: {
         logo: { type: String, required: false }, // store file paths or URLs
-        templeBannerImage: { type: String, required: false }, // store file paths or URLs
-        templeImages: { type: [String], required: false } // store file paths or URLs
+        bannerImage: { type: String, required: false }, // store file paths or URLs
+        otherImages: { type: [String], required: false } // store file paths or URLs
     },
     bankDetails: {
         bankName: { type: String, required: true },
@@ -78,6 +78,10 @@ const templeSchema = new Schema({
         type: Number,
         default: 0
     },
+    isCreated: {
+        type: Number,
+        default: 1
+    },
     socialMedia: {
         facebook: { type: String, required: false },
         twitter: { type: String, required: false },
@@ -90,6 +94,10 @@ const templeSchema = new Schema({
     //     timing: { type: String, required: false },
     //     images: { type: [String], required: false } // array of image paths or URLs
     // }]  // array of objects
+    pendingChanges: {
+        type: Object,
+        default: null,
+    },
 });
 
 
