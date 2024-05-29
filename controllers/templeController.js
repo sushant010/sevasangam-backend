@@ -448,5 +448,49 @@ export const getSimilarTemples = async (req, res) => {
 
 
 
+export const getTrendingTemples = async (req, res) => {
+  try {
+
+    const limit = parseInt(req.query.limit, 10) || 0; 
+    const temples = await Temple.find({ isVerified: 1, isTrending: 1 }).limit(limit);
+    
+
+    res.status(200).send({ success: true, message: 'Trending temples retrieved successfully', data: { temples } });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+export const addTrendingTemple = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    await Temple.findByIdAndUpdate(id, { isTrending: 1 });
+
+    res.status(200).send({ success: true, message: 'Trending temples updated successfully'});
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+
+export const removeTrendingTemple = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+    
+    await Temple.findByIdAndUpdate(id, { isTrending: 0 });
+
+    res.status(200).send({ success: true, message: 'Trending temples updated successfully'});
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+
+
+
+
 
 

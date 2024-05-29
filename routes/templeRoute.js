@@ -14,7 +14,10 @@ import {
   getUnverifiedNewlyCreatedTemples,
   getUnverifiedUpdatedByAdminTemples,
   getSimilarTemples,
-  getTempleByName,
+  getTrendingTemples,
+
+  addTrendingTemple,
+  removeTrendingTemple,
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../config/multer.js';
@@ -58,6 +61,12 @@ router.get('/pending-changes/:id', reviewPendingChanges)
 
 router.post('/fetch-similar-temples/:id', getSimilarTemples)
 
+router.get('/fetch-trending-temples', getTrendingTemples)
+
+router.post('/add-trending-temple/:id', addTrendingTemple)
+
+
+router.delete('/remove-trending-temple/:id', removeTrendingTemple)
 
 // router.post('/img-upload', upload.single('image'), uploadImage)
 

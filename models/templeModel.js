@@ -82,6 +82,11 @@ const templeSchema = new Schema({
         type: Number,
         default: 1
     },
+    // Trending is defined by superadmin
+    isTrending: { 
+        type: Number,
+        default: 0
+    },
     socialMedia: {
         facebook: { type: String, required: false },
         twitter: { type: String, required: false },
