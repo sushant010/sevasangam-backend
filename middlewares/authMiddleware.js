@@ -61,3 +61,23 @@ export const isSuperAdmin = async (req, res, next) => {
       .send({ success: false, message: "Internal Server Error" });
   }
 };
+
+export const isOptionalSignIn = async(req,res,next)=>{
+
+  try {
+    // get token from authorization header
+    if (!req.headers.authorization) {
+      return next();
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    const decode = JWT.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return next();
+    }
+    req.user = decode;
+    return next();
+  } catch (error) {
+    console.log(error);
+    return next();
+  }
+}

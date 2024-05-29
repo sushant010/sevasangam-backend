@@ -358,7 +358,6 @@ export const getFilteredTemples = async (req, res) => {
       .skip((page - 1) * limit) // Skip the required number of documents
       .limit(limit); // Limit the number of documents returned per page
 
-      console.log(temples)
 
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
   } catch (error) {

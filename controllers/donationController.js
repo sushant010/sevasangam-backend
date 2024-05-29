@@ -173,9 +173,8 @@ export const fetchAllDonations = async (req, res) => {
 
 
 export const subscription = async (req, res) => {
-    console.log(req.body)
     const amount = req.body.amount;
-    const userId = req.user._id;
+    const userId = req.user ? req.user._id : 'no_user_id';
     const currency = req.body.currency;
 
     //create razorpay plan
