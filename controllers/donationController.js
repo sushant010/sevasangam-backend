@@ -201,7 +201,6 @@ export const subscription = async (req, res) => {
             total_count: 30,
             customer_notify: 1,
         });
-        console.log(subscription)
 
         res.json({ success: true, subscription });
 
@@ -212,19 +211,6 @@ export const subscription = async (req, res) => {
         
     }
 
-    // try {
-    //     const subscription = await instance.subscriptions.create({
-    //         plan_id: req.body.plan_id,
-    //         total_count: req.body.total_count,
-    //         customer_notify: req.body.customer_notify,
-    //         amount: req.body.amount,
-    //         start_at: req.body.start_at
-    //     });
-    //     res.json({ success: true, subscription });
-    // } catch (error) {
-    //     console.error('Error creating subscription:', error);
-    //     res.status(500).json({ success: false, message: 'Failed to create subscription' });
-    // }
 }
 
 
