@@ -26,17 +26,10 @@ const donationSchema = new Schema({
         ref: 'Temple',
         required: false,
     },
-    // paymentMethod: {
-    //     type: String,
-    //     required: false,
-    //     enum: ['credit card', 'debit card', 'paypal', 'bank transfer'],
-    // },
-    // status: {
-    //     type: String,
-    //     required: false,
-    //     enum: ['pending', 'completed', 'failed'],
-    //     default: 'pending',
-    // },
+    is80CertificateRequested: {
+        type: Boolean,
+        default: false,
+    },
     razorpay_order_id: {
         type: String,
         required: true,
