@@ -1,9 +1,10 @@
 import express from "express";
-import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete } from '../controllers/authController.js'
+import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete, sendOtpToRegisterNewUserController } from '../controllers/authController.js'
 import { isAdmin, isSignin, isSuperAdmin } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 
+router.post('/otp-to-register',sendOtpToRegisterNewUserController)
 
 router.post('/register', registerController)
 

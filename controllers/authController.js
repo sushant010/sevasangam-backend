@@ -14,9 +14,9 @@ dotenv.config();
 
 export const registerController = async (req, res) => {
     try {
-        const { name, email, password, phone, role } = req.body;
+        const { name, email, password, phone, otpToken,otp } = req.body;
 
-        if (!name || !email || !password || !phone) {
+        if (!name || !email || !password || !phone || !otpToken || !otp) {
             return res.send({ error: 'Input field cannot be blank, Please fill required information' })
         }
         const existingUser = await userModel.findOne({ email });
@@ -25,9 +25,37 @@ export const registerController = async (req, res) => {
             return res.send({ error: 'user already exists! Please login.' })
         }
 
+        //extract otpHash from otp token
+
+        const otpTokenDecode = JWT.verify(otpToken, process.env.JWT_SECRET);
+
+        if(!otpTokenDecode){
+            return res.send({error:"Otp expired please resend"})
+
+        }
+
+
+        const isValidOtp = await comparePassword(otp,otpTokenDecode.otp)
+
+
+        if(! isValidOtp){
+
+            return res.send({error:"Otp not valid"})
+
+        }
+
+
+        if(otpTokenDecode.email !== email){
+
+            return res.send({error:"Otp not valid email"})
+
+        }
+
+
         const hashedPassword = await hashPassword(password);
-        const user = await new userModel({ name, email, password: hashedPassword, phone, role }).save();
-        return res.status(201).send({ success: true, message: 'Your Account is created successfully!', user })
+        const user = await new userModel({ name, email, password: hashedPassword, phone }).save();
+        const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        return res.status(201).send({ success: true, message: 'Your Account is created successfully!', user,token })
 
     } catch (error) {
         return res.status(500).send({ success: false, message: 'Oops! Registration failed!', error })
@@ -307,5 +335,35 @@ export const resetPasswordComplete = async (req, res) => {
         console.log(error);
         res.json({ status: "Something Went Wrong" });
     }
+}
+
+import sendOtpToRegisterNewUser from '../email/functions/sendOtpToRegisterNewUser.js';
+
+export const sendOtpToRegisterNewUserController = async (req, res) => {
+    const { email } = req.body;
+    const user = await userModel.findOne({
+
+        email: email
+    });
+    if (user) {
+        return res.status(400).send({ message: 'This email already exists' });
+    }
+    const otp = Math.floor(1000 + Math.random() * 9000);
+
+    try {
+        await sendOtpToRegisterNewUser(email, otp);
+        const otpHash = await hashPassword(otp.toString())
+
+        // create otp jwt token for 1hour
+        const otpToken = JWT.sign({ email, otp: otpHash }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return res.status(200).send({ success: true, message: 'OTP sent successfully!', otpToken });
+
+        
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send({ success: false, message: 'Failed to send OTP' });
+        
+    }
+
 }
 
