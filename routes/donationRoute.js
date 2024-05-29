@@ -10,7 +10,7 @@ import {
     subscription,
     fetchAllDonations
 } from '../controllers/donationController.js';
-import { isOptionalSignIn, isSignin } from '../middlewares/authMiddleware.js';
+import { isSignin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
