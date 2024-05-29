@@ -61,3 +61,5 @@ export const isSuperAdmin = async (req, res, next) => {
       .send({ success: false, message: "Internal Server Error" });
   }
 };
+
+
