@@ -25,7 +25,7 @@ router.post('/fetch-all-donation', fetchAllDonations);
 
 
 
-router.post('/subscription',isOptionalSignIn, subscription);
+router.post('/subscription', subscription);
 
 
 
