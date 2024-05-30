@@ -167,11 +167,9 @@ export const updateTempleById = async (req, res) => {
 
 // Get all temples
 export const getAllTemples = async (req, res) => {
-  console.log("getAllTemples")
   try {
     const temples = await Temple.find({ isVerified: 1 }).populate('createdBy');
     // .populate('createdBy');
-    console.log(temples)
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -435,7 +433,6 @@ export const getSimilarTemples = async (req, res) => {
 
 
     const typeOfOrganization = refTemple.typeOfOrganization;
-    console.log(typeOfOrganization)
 
     const temples = await Temple.find({ typeOfOrganization }).populate('createdBy').limit(limit);
     // Limit the number of documents returned per page

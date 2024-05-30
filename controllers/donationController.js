@@ -214,6 +214,60 @@ export const allDonationsByUser = async (req, res) => {
   };
 
 
+  
+export const allDonationsByAdmin = async (req, res) => {
+    try {
+      const { id } = req.body;
+      let count = 100; // Number of donations to fetch per request
+      let skip = 0;
+   
+  
+      // Fetch donations in a loop to handle pagination
+     
+        const options = {
+          count: count,
+          skip: skip,
+        };
+  
+        // Fetch donations
+        const fetchAllRazorpayAllDonations = await instance.payments.all(options);
+
+        const razorpayAllDonations = fetchAllRazorpayAllDonations.items;
+
+        const adminDonations = razorpayAllDonations.filter(
+            (donation) => {
+              if (donation.notes && donation.notes.temple) {
+                  try {
+                    const donations = Temple.findOne({ _id: donation.notes.temple, createdBy: id });
+                     return donations;
+                } catch (error) {
+                  // Handle JSON parse error if donateUser is not a valid JSON string
+                  res.status(200).json({ success: true, message: 'No Donations found' });
+                }
+              }
+              return false;
+            }
+          );
+    
+  
+        const allDonations = await Donation.find({});
+        let customDonations = []
+
+        adminDonations.map(donation => { 
+            const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
+            if(customDonation){
+                customDonations.push(customDonation)
+            }
+
+        })
+  
+      res.status(200).json({ success: true, message: 'Donations retrieved successfully', razorpayDonations: adminDonations,donations :customDonations });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
+
+
 export const request80Certificate = async (req, res) => {
     try {
         const { id } = req.body;
@@ -229,6 +283,66 @@ export const request80Certificate = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
+
+export const upload80Certificate = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const certificatePath = req.file.path;
+
+        // Find the donation by ID and update it with the certificate path
+        const donation = await Donation.findOneAndUpdate(
+            {razorpay_payment_id:id },
+            { certificate : certificatePath },
+            { new: true }
+        );
+
+        if (!donation) {
+            return res.status(404).json({ success: false, message: 'Donation not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Certificate uploaded successfully', donation });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+export const update80Certificate = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const certificatePath = req.file.path;
+
+        // Find the donation by ID and update it with the new certificate path
+        const donation = await Donation.findOneAndUpdate(
+            { razorpay_payment_id: id },
+            { certificate: certificatePath },
+            { new: true }
+        );
+
+        if (!donation) {
+            return res.status(404).json({ success: false, message: 'Donation not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Certificate updated successfully', donation });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 
 

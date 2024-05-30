@@ -30,6 +30,11 @@ const donationSchema = new Schema({
         type: Boolean,
         default: false,
     },
+    certificate:
+    {
+        type: String,
+        required: false
+    }, 
     razorpay_order_id: {
         type: String,
         required: true,
