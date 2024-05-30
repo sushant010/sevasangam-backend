@@ -21,7 +21,7 @@ router.post('/fetch-all-donation', fetchAllDonations);
 
 router.post('/request-80-certificate', request80Certificate);
 
-router.get('/fetch-donations-by-user', allDonationsByUser);
+router.post('/fetch-donations-by-user', allDonationsByUser);
 
 
 

@@ -163,35 +163,51 @@ export const fetchAllDonations = async (req, res) => {
 
 export const allDonationsByUser = async (req, res) => {
     try {
-      const { id } = req.body;
+      const { email } = req.body;
       let count = 100; // Number of donations to fetch per request
       let skip = 0;
-      let donations = [];
+   
   
       // Fetch donations in a loop to handle pagination
-      while (true) {
+     
         const options = {
           count: count,
           skip: skip,
         };
   
         // Fetch donations
-        const donationResponse = await instance.payments.all(options);
-        donations = donations.concat(donationResponse.items);
+        const fetchAllRazorpayAllDonations = await instance.payments.all(options);
+
+        const razorpayAllDonations = fetchAllRazorpayAllDonations.items;
+
+        const userDonations = razorpayAllDonations.filter(
+            (donation) => {
+              if (donation.notes && donation.notes.donateUser) {
+                try {
+                  const donateUser = JSON.parse(donation.notes.donateUser);
+                  return donateUser.email === email;
+                } catch (error) {
+                  // Handle JSON parse error if donateUser is not a valid JSON string
+                  res.status(200).json({ success: true, message: 'No Donations found' });
+                }
+              }
+              return false;
+            }
+          );
+    
   
-        // If the number of fetched donations is less than count, exit the loop
-        if (donationResponse.items.length < count) {
-          break;
-        }
+        const allDonations = await Donation.find({});
+        let customDonations = []
+
+        userDonations.map(donation => { 
+            const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
+            if(customDonation){
+                customDonations.push(customDonation)
+            }
+
+        })
   
-        // Increment skip to fetch the next batch of donations
-        skip += count;
-      }
-  
-      // Filter donations by user ID
-      const userDonations = donations.filter(donation => donation.notes && donation.notes.donateUser === id);
-  
-      res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations: userDonations });
+      res.status(200).json({ success: true, message: 'Donations retrieved successfully', razorpayDonations: userDonations,donations :customDonations });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
@@ -204,7 +220,7 @@ export const request80Certificate = async (req, res) => {
 
         // Fetch all payments
         const donation = await instance.payments.fetch(id);
-        const fetchDonation = Donation.findByIdAndUpdate(id, { is80CertificateRequested: true }, { new: true });
+        const fetchDonation = await Donation.findOneAndUpdate({ razorpay_payment_id: id }, { is80CertificateRequested: true }, { new: true });
         if (!fetchDonation) {
            new Donation({ is80CertificateRequested: true,razorpay_order_id:donation.order_id,razorpay_payment_id:donation.id,razorpay_signature:donation.signature}).save()
         }
