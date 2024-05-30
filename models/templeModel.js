@@ -103,6 +103,16 @@ const templeSchema = new Schema({
         type: Object,
         default: null,
     },
+    timing: {
+        start: {
+            type: String,
+            required: true
+        },
+        end: {
+            type: String,
+            required: true
+        }
+    },
 });
 
 

@@ -15,28 +15,27 @@ const eventModel = mongoose.Schema({
         type: String,
         required: true
     },
-    startDate: {
-        type: Date,
-        required: true
+    date: {
+        start: {
+            type: Date,
+            required: true
+        },
+        end: {
+            type: Date,
+            required: true
+        }
     },
-    endDate: {
-        type: Date,
-        required: true
+    timing: {
+        start: {
+            type: String,
+            required: true
+        },
+        end: {
+            type: String,
+            required: true
+        }
     },
-    startTime: {
-        type: String,
-        required: true
-    },
-    endTime: {
-        type: String,
-        required: true
-    },
-    images: {
-        logo: { type: String, required: false }, // store file paths or URLs
-        bannerImage: { type: String, required: false }, // store file paths or URLs
-        otherImages: { type: [String], required: false } // store file paths or URLs
-    },
-
-    })
+    images: { type: [String], required: false } 
+});
 
 export default mongoose.model('Event', eventModel);
