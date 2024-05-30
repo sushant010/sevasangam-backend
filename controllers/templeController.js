@@ -168,7 +168,54 @@ export const updateTempleById = async (req, res) => {
 // Get all temples
 export const getAllTemples = async (req, res) => {
   try {
-    const temples = await Temple.find({ isVerified: 1 }).populate('createdBy');
+   
+    const {templeName, location, isTrending} = req.query;
+
+    let dbQuery = {
+      $or:[]
+    }
+
+    if(location && location !== null && location.trim() !== ""){
+      // { 'location.address': { $regex: address, $options: 'i' } },
+      dbQuery.$or.push(
+        { 'location.address': { $regex: location, $options: 'i' } },
+      )
+      dbQuery.$or.push(
+        { 'location.country': { $regex: location, $options: 'i' } },
+      )
+      dbQuery.$or.push(
+        { 'location.state': { $regex: location, $options: 'i' } },
+      )
+      dbQuery.$or.push(
+        { 'location.city': { $regex: location, $options: 'i' } },
+      )
+    }
+
+
+
+    if(templeName && templeName !== null && templeName.trim() !== ""){
+      dbQuery.templeName = { $regex: templeName, $options: 'i' };
+    }
+
+    if(isTrending && isTrending !== "false"){
+      console.log(isTrending)
+      dbQuery.isTrending = 1
+    } 
+
+
+
+    if(dbQuery.$or.length === 0){
+      delete dbQuery.$or
+    }
+
+    console.log(dbQuery)
+    const temples = await Temple.find({ ...dbQuery}).populate('createdBy');
+
+
+
+
+    
+
     // .populate('createdBy');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
