@@ -1,7 +1,6 @@
 import Donation from '../models/donationModel.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import Payment from '../models/payment.js';
 import userModel from '../models/userModel.js';
 import Temple from '../models/templeModel.js';
 
@@ -20,10 +19,6 @@ export const checkout = async (req, res) => {
     res.status(200).json({ success: true, message: 'Payment successful', order });
 
 }
-
-
-
-
 
 
 // Call the fetchPayments function to fetch payments
@@ -83,7 +78,6 @@ export const fetchAllDonations = async (req, res) => {
             dateTo
         } = req.body;
 
-        console.log(req.body)
 
         // Base options for fetching donations
         const options = {
@@ -167,6 +161,188 @@ export const fetchAllDonations = async (req, res) => {
 };
 
 
+export const allDonationsByUser = async (req, res) => {
+    try {
+      const { email } = req.body;
+      let count = 100; // Number of donations to fetch per request
+      let skip = 0;
+   
+  
+      // Fetch donations in a loop to handle pagination
+     
+        const options = {
+          count: count,
+          skip: skip,
+        };
+  
+        // Fetch donations
+        const fetchAllRazorpayAllDonations = await instance.payments.all(options);
+
+        const razorpayAllDonations = fetchAllRazorpayAllDonations.items;
+
+        const userDonations = razorpayAllDonations.filter(
+            (donation) => {
+              if (donation.notes && donation.notes.donateUser) {
+                try {
+                  const donateUser = JSON.parse(donation.notes.donateUser);
+                  return donateUser.email === email;
+                } catch (error) {
+                  // Handle JSON parse error if donateUser is not a valid JSON string
+                  res.status(200).json({ success: true, message: 'No Donations found' });
+                }
+              }
+              return false;
+            }
+          );
+    
+  
+        const allDonations = await Donation.find({});
+        let customDonations = []
+
+        userDonations.map(donation => { 
+            const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
+            if(customDonation){
+                customDonations.push(customDonation)
+            }
+
+        })
+  
+      res.status(200).json({ success: true, message: 'Donations retrieved successfully', razorpayDonations: userDonations,donations :customDonations });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
+
+
+  
+export const allDonationsByAdmin = async (req, res) => {
+    try {
+      const { id } = req.body;
+      let count = 100; // Number of donations to fetch per request
+      let skip = 0;
+   
+  
+      // Fetch donations in a loop to handle pagination
+     
+        const options = {
+          count: count,
+          skip: skip,
+        };
+  
+        // Fetch donations
+        const fetchAllRazorpayAllDonations = await instance.payments.all(options);
+
+        const razorpayAllDonations = fetchAllRazorpayAllDonations.items;
+
+        const adminDonations = razorpayAllDonations.filter(
+            (donation) => {
+              if (donation.notes && donation.notes.temple) {
+                  try {
+                    const donations = Temple.findOne({ _id: donation.notes.temple, createdBy: id });
+                     return donations;
+                } catch (error) {
+                  // Handle JSON parse error if donateUser is not a valid JSON string
+                  res.status(200).json({ success: true, message: 'No Donations found' });
+                }
+              }
+              return false;
+            }
+          );
+    
+  
+        const allDonations = await Donation.find({});
+        let customDonations = []
+
+        adminDonations.map(donation => { 
+            const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
+            if(customDonation){
+                customDonations.push(customDonation)
+            }
+
+        })
+  
+      res.status(200).json({ success: true, message: 'Donations retrieved successfully', razorpayDonations: adminDonations,donations :customDonations });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
+
+
+export const request80Certificate = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        // Fetch all payments
+        const donation = await instance.payments.fetch(id);
+        const fetchDonation = await Donation.findOneAndUpdate({ razorpay_payment_id: id }, { is80CertificateRequested: true }, { new: true });
+        if (!fetchDonation) {
+           new Donation({ is80CertificateRequested: true,razorpay_order_id:donation.order_id,razorpay_payment_id:donation.id,razorpay_signature:donation.signature}).save()
+        }
+        res.status(200).json({ success: true, message: '80G certificate requested successfully' ,donation});
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+
+export const upload80Certificate = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const certificatePath = req.file.path;
+
+        // Find the donation by ID and update it with the certificate path
+        const donation = await Donation.findOneAndUpdate(
+            {razorpay_payment_id:id },
+            { certificate : certificatePath },
+            { new: true }
+        );
+
+        if (!donation) {
+            return res.status(404).json({ success: false, message: 'Donation not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Certificate uploaded successfully', donation });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+export const update80Certificate = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const certificatePath = req.file.path;
+
+        // Find the donation by ID and update it with the new certificate path
+        const donation = await Donation.findOneAndUpdate(
+            { razorpay_payment_id: id },
+            { certificate: certificatePath },
+            { new: true }
+        );
+
+        if (!donation) {
+            return res.status(404).json({ success: false, message: 'Donation not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Certificate updated successfully', donation });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 
 
@@ -216,87 +392,4 @@ export const subscription = async (req, res) => {
 
 
 
-// Create a donation
-export const createDonation = async (req, res) => {
-    try {
-        const { amount, user, temple, paymentMethod, transactionId } = req.body;
 
-        const newDonation = new Donation({
-            amount,
-            user,
-            temple,
-            paymentMethod,
-            transactionId,
-            status: 'pending', // Default status
-        });
-
-        const savedDonation = await newDonation.save();
-        res.status(201).json({ success: true, data: savedDonation });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// Get all donations
-export const getDonations = async (req, res) => {
-    try {
-        const donations = await Donation.find().populate('user', 'name email').populate('temple', 'name location');
-        res.status(200).json({ success: true, data: donations });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// Get a donation by ID
-export const getDonationById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const donation = await Donation.findById(id).populate('user', 'name email').populate('temple', 'name location');
-
-        if (!donation) {
-            return res.status(404).json({ success: false, message: 'Donation not found' });
-        }
-
-        res.status(200).json({ success: true, data: donation });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// Update a donation
-export const updateDonation = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { amount, user, temple, paymentMethod, status } = req.body;
-
-        const updatedDonation = await Donation.findByIdAndUpdate(
-            id,
-            { amount, user, temple, paymentMethod, status },
-            { new: true }
-        );
-
-        if (!updatedDonation) {
-            return res.status(404).json({ success: false, message: 'Donation not found' });
-        }
-
-        res.status(200).json({ success: true, data: updatedDonation });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// Delete a donation
-export const deleteDonation = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const deletedDonation = await Donation.findByIdAndDelete(id);
-
-        if (!deletedDonation) {
-            return res.status(404).json({ success: false, message: 'Donation not found' });
-        }
-
-        res.status(200).json({ success: true, message: 'Donation deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};

@@ -1,16 +1,17 @@
 import express from 'express';
 import {
-    createDonation,
-    getDonations,
-    getDonationById,
-    updateDonation,
-    deleteDonation,
     checkout,
     paymentVerification,
     subscription,
-    fetchAllDonations
+    fetchAllDonations,
+    request80Certificate,
+    allDonationsByUser,
+    allDonationsByAdmin,
+    upload80Certificate,
+    update80Certificate
 } from '../controllers/donationController.js';
 import { isSignin } from '../middlewares/authMiddleware.js';
+import pdfUpload from '../config/pdfMulter.js';
 
 const router = express.Router();
 
@@ -22,26 +23,20 @@ router.post('/payment-verification', paymentVerification);
 
 router.post('/fetch-all-donation', fetchAllDonations);
 
+router.post('/request-80-certificate', request80Certificate);
 
+router.post('/fetch-donations-by-user', allDonationsByUser);
+
+router.post('/fetch-donations-by-admin', allDonationsByAdmin);
+
+router.post('/upload-80-certificate', pdfUpload.single('certificate'), upload80Certificate);
+router.put('/update-80-certificate',pdfUpload.single('certificate'), update80Certificate);
 
 
 router.post('/subscription', subscription);
 
 
 
-// Create a donation
-router.post('/create-donation', createDonation);
 
-// Get all donations
-router.get('/all-donation', getDonations);
-
-// Get a donation by ID
-router.get('/:id', getDonationById);
-
-// Update a donation
-router.put('/update-donation/:id', updateDonation);
-
-// Delete a donation
-router.delete('/delete-donation/:id', deleteDonation);
 
 export default router;
