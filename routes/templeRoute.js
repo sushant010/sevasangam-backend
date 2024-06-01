@@ -18,6 +18,7 @@ import {
 
   addTrendingTemple,
   removeTrendingTemple,
+  getAllVerifiedTemples,
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../config/multer.js';
@@ -33,10 +34,16 @@ router.post('/create-temple', upload.fields([
 ]), createTemple);
 
 // Update a temple by ID
-router.put('/update-temple/:id', updateTempleById);
+router.put('/update-temple/:id', upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'bannerImage', maxCount: 1 },
+  { name: 'otherImages', maxCount: 5 },
+]), updateTempleById);
 
 // Get all temples
 router.get('/get-temples', getAllTemples);
+
+router.get('/get-verified-temples', getAllVerifiedTemples);
 
 // Get a single temple by ID
 router.get('/get-temple/:id', getTempleById);
@@ -65,14 +72,7 @@ router.get('/fetch-trending-temples', getTrendingTemples)
 
 router.post('/add-trending-temple/:id', addTrendingTemple)
 
-
 router.delete('/remove-trending-temple/:id', removeTrendingTemple)
-
-// router.post('/img-upload', upload.single('image'), uploadImage)
-
-// get all temples by an admin for a timerange
-// router.post('/get-temples-by-admin-with-timerange', getAllTemplesByAdminForTimerange);
-
 
 router.get('/search-temple-suggestions', getSearchSuggestionTempleName)
 

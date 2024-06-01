@@ -83,7 +83,11 @@ const templeSchema = new Schema({
         default: 1
     },
     // Trending is defined by superadmin
-    isTrending: { 
+    isTrending: {
+        type: Number,
+        default: 0
+    },
+    hasChangesToApprove: {
         type: Number,
         default: 0
     },
@@ -106,11 +110,13 @@ const templeSchema = new Schema({
     timing: {
         start: {
             type: String,
-            required: true
+            required: true,
+            default: '08:00'
         },
         end: {
             type: String,
-            required: true
+            required: true,
+            default: '17:00'
         }
     },
 });

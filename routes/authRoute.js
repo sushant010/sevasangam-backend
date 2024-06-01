@@ -1,12 +1,15 @@
 import express from "express";
 import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete, sendOtpToRegisterNewUserController } from '../controllers/authController.js'
 import { isAdmin, isSignin, isSuperAdmin } from '../middlewares/authMiddleware.js'
+import upload from '../config/authMulter.js';
 
 const router = express.Router()
 
-router.post('/otp-to-register',sendOtpToRegisterNewUserController)
+router.post('/otp-to-register', sendOtpToRegisterNewUserController)
 
-router.post('/register', registerController)
+router.post('/register', upload.fields([
+    { name: 'avatar', maxCount: 1 },
+]), registerController)
 
 router.post('/login', loginController)
 
@@ -27,19 +30,6 @@ router.get('/superadmin-auth', isSignin, isSuperAdmin, (req, res) => {
     res.status(201).send({ ok: true });
 })
 
-router.get('/user-auth', isSignin, (req, res) => {
-    res.status(201).send({ ok: true });
-})
-
-
-router.get('/admin-auth', isSignin, isAdmin, (req, res) => {
-    res.status(201).send({ ok: true });
-})
-
-router.get('/superadmin-auth', isSignin, isSuperAdmin, (req, res) => {
-    res.status(201).send({ ok: true });
-})
-
 router.get('/all-user', allUsersController)
 
 
@@ -51,7 +41,9 @@ router.get('/all-temple-admin', allTempleAdminsController)
 
 router.delete('/delete-user/:id', deleteUserController)
 
-router.put('/update/:id', updateProfileController)
+router.put('/update/:id', upload.fields([
+    { name: 'avatar', maxCount: 1 },
+]), updateProfileController)
 
 // Google Auth
 

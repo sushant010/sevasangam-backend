@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const { Schema } = mongoose;
 const userSchema = new Schema({
   name: {
@@ -29,13 +30,14 @@ const userSchema = new Schema({
     default: 0,
     required: false,
   },
-  isEmailVerified: {
-    type: Boolean,
-    default: false,
-  },
+
   createdOn: {
     type: Date,
     default: Date.now,
+  },
+  avatar: {
+    type: String,
+    required: false,
   },
 });
 export default mongoose.model("User", userSchema);

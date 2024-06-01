@@ -1,127 +1,129 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>OTP Verification</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap");
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background-color: #f5f5f5;
-        color: #333;
-      }
+<head>
+  <title>OTP Verification</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap");
 
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
 
-      .header {
-        text-align: center;
-        padding: 20px 0;
-      }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-      .header img {
-        max-width: 150px;
-      }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+    }
 
-      .header h1 {
-        margin-top: 10px;
-        font-size: 28px;
-        font-weight: 600;
-      }
+    .header img {
+      max-width: 150px;
+    }
 
-      .content {
-        padding: 20px;
-      }
+    .header h1 {
+      margin-top: 10px;
+      font-size: 28px;
+      font-weight: 600;
+    }
 
-      .message {
-        margin-bottom: 20px;
-      }
+    .content {
+      padding: 20px;
+    }
 
-      .greeting {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 10px;
-      }
+    .message {
+      margin-bottom: 20px;
+    }
 
-      .intro {
-        font-size: 16px;
-        line-height: 1.5;
-        margin-bottom: 20px;
-      }
+    .greeting {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
 
-      .otp-box {
-        background-color: #f5f5f5;
-        padding: 20px;
-        border-radius: 5px;
-        text-align: center;
-      }
+    .intro {
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
 
-      .otp {
-        font-size: 32px;
-        font-weight: 600;
-        color: #333;
-      }
+    .otp-box {
+      background-color: #f5f5f5;
+      padding: 20px;
+      border-radius: 5px;
+      text-align: center;
+    }
 
-      .security-note {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 10px;
-      }
+    .otp {
+      font-size: 32px;
+      font-weight: 600;
+      color: #ff395c;
+    }
 
-      .ignore {
-        font-size: 14px;
-        color: #666;
-      }
+    .security-note {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
 
-      .footer {
-        text-align: center;
-        padding: 20px 0;
-        border-top: 1px solid #ddd;
-        font-size: 14px;
-        color: #666;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <img
-          src="https://shop.raceya.fit/wp-content/uploads/2020/11/logo-placeholder.jpg"
-          alt="Our App Logo"
-        />
-        <h1>Welcome to Sevanigam!</h1>
+    .ignore {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px 0;
+      border-top: 1px solid #ddd;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <!-- <img src="https://shop.raceya.fit/wp-content/uploads/2020/11/logo-placeholder.jpg" alt="Our App Logo" /> -->
+      <h1>Welcome to SevaSangam!</h1>
+    </div>
+    <div class="content">
+      <div class="message">
+        <p class="greeting">Hey there!</p>
+        <p class="intro">
+          Thanks for joining us! We're excited to have you on board. To
+          complete your registration, please verify your email address by
+          entering the OTP below:
+        </p>
       </div>
-      <div class="content">
-        <div class="message">
-          <p class="greeting">Hey there!</p>
-          <p class="intro">
-            Thanks for joining us! We're excited to have you on board. To
-            complete your registration, please verify your email address by
-            entering the OTP below:
-          </p>
-        </div>
-        <div class="otp-box">
-          <h2 class="otp"><%= otp %></h2>
-        </div>
-        <div class="message">
-          <p class="security-note">
-            Don't share this OTP with anyone for security reasons.
-          </p>
-          <p class="ignore">
-            If you didn't initiate this registration, feel free to ignore this
-            email.
-          </p>
-        </div>
+      <div class="otp-box">
+        <h2 class="otp">
+          <%= otp %>
+        </h2>
       </div>
-      <div class="footer">
-        <p>&copy; 2023 Our App. All rights reserved.</p>
+      <div class="message">
+        <p class="security-note">
+          Don't share this OTP with anyone for security reasons.
+        </p>
+        <p class="ignore">
+          If you didn't initiate this registration, feel free to ignore this
+          email.
+        </p>
       </div>
     </div>
-  </body>
+    <div class="footer">
+      <p>&copy; 2024 SevaSangam. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+
 </html>

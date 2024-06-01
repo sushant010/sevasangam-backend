@@ -14,7 +14,8 @@ dotenv.config();
 
 export const registerController = async (req, res) => {
     try {
-        const { name, email, password, phone, otpToken,otp } = req.body;
+        const { name, email, password, phone, otpToken, otp } = req.body;
+        const { files } = req;
 
         if (!name || !email || !password || !phone || !otpToken || !otp) {
             return res.send({ error: 'Input field cannot be blank, Please fill required information' })
@@ -29,35 +30,40 @@ export const registerController = async (req, res) => {
 
         const otpTokenDecode = JWT.verify(otpToken, process.env.JWT_SECRET);
 
-        if(!otpTokenDecode){
-            return res.send({error:"Otp expired please resend"})
+        if (!otpTokenDecode) {
+            return res.send({ error: "Otp expired please resend" })
 
         }
 
 
-        const isValidOtp = await comparePassword(otp,otpTokenDecode.otp)
+        const isValidOtp = await comparePassword(otp, otpTokenDecode.otp)
 
 
-        if(! isValidOtp){
+        if (!isValidOtp) {
 
-            return res.send({error:"Otp not valid"})
-
-        }
-
-
-        if(otpTokenDecode.email !== email){
-
-            return res.send({error:"Otp not valid email"})
+            return res.send({ error: "Otp not valid" })
 
         }
 
+
+        if (otpTokenDecode.email !== email) {
+
+            return res.send({ error: "Otp not valid email" })
+
+        }
+
+        let avatar = '';
+        if (files && files.avatar) {
+            avatar = files.avatar[0].path;
+        }
 
         const hashedPassword = await hashPassword(password);
-        const user = await new userModel({ name, email, password: hashedPassword, phone }).save();
+        const user = await new userModel({ name, email, password: hashedPassword, phone, avatar }).save();
         const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        return res.status(201).send({ success: true, message: 'Your Account is created successfully!', user,token })
+        return res.status(201).send({ success: true, message: 'Your Account is created successfully!', user, token })
 
     } catch (error) {
+        console.log(error)
         return res.status(500).send({ success: false, message: 'Oops! Registration failed!', error })
     }
 }
@@ -81,42 +87,13 @@ export const loginController = async (req, res) => {
             return res.send({ error: 'Wrong Credentials!' })
         }
         const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        return res.status(201).send({ success: true, message: 'Logged in Successfully', user, token })
+        return res.status(201).send({ success: true, message: 'Logged in successfully', user, token })
 
 
     } catch (error) {
         return res.status(500).send({ success: false, message: 'Login failed!', error })
     }
 }
-
-// export const forgotPassword = async (req, res) => {
-//     try {
-//         const { email } = req.body;
-
-//         if (!email) {
-//             return res.send({ error: 'Please fill email.' })
-//         }
-//         const existingUser = await userModel.findOne({ email });
-
-//         if (!existingUser) {
-//             return res.send({ error: 'No such user exists, please Register!' })
-//         }
-
-//         const hashedPassword = await hashPassword(password);
-
-//         const user = await userModel.findByIdAndUpdate(existingUser._id, { password: hashedPassword })
-//         if (user) {
-
-//             return res.status(201).send({ success: true, message: 'password updated successfully', user })
-//         }
-
-//     } catch (error) {
-
-//         return res.status(500).send({ success: false, message: 'password change failed!', error })
-//     }
-// }
-
-
 
 
 export const allUsersController = async (req, res) => {
@@ -158,6 +135,7 @@ export const deleteUserController = async (req, res) => {
 export const updateProfileController = async (req, res) => {
     try {
         const { name, password, phone } = req.body;
+        const { files } = req;
         const userId = req.params.id;
 
         // Find the user by ID
@@ -172,12 +150,18 @@ export const updateProfileController = async (req, res) => {
         const hashedPassword = password ? await hashPassword(password) : undefined;
 
         // Update user's information
+        let avatar = '';
+        if (files && files.avatar) {
+            avatar = files.avatar[0].path;
+        }
+
         const updatedUser = await userModel.findByIdAndUpdate(
             userId,
             {
                 name: name || currentUser.name,
                 password: hashedPassword || currentUser.password,
-                phone: phone || currentUser.phone
+                phone: phone || currentUser.phone,
+                avatar: avatar || currentUser?.avatar || '',
             },
             { new: true } // Return the updated document
         );
@@ -195,6 +179,7 @@ export const updateProfileController = async (req, res) => {
 export const googleLoginController = async (req, res) => {
     try {
         const { name, email, picture, accessToken } = req.body;
+        console.log(req.body)
 
         if (!name || !email || !accessToken) {
             return res.status(400).send({ error: 'Missing required fields' });
@@ -204,18 +189,17 @@ export const googleLoginController = async (req, res) => {
 
         if (!user) {
             // Register new user
-            const password = 'defaultPassword123'; // Set a default password, or you can generate a random one
+            const password = Math.random().toString(36).slice(-8);
             const hashedPassword = await hashPassword(password);
-            user = await new userModel({ name, email, password: hashedPassword, phone: '' }).save();
+            user = await new userModel({ name, email, password: hashedPassword, phone: '', avatar: picture }).save();
         }
 
         // Generate JWT token
         const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-
         return res.status(200).send({
             success: true,
-            message: 'Logged in successfully with Google!',
+            message: 'Logged in successfully!',
             user,
             token,
         });
@@ -345,8 +329,11 @@ export const sendOtpToRegisterNewUserController = async (req, res) => {
 
         email: email
     });
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
     if (user) {
-        return res.status(400).send({ message: 'This email already exists' });
+        return res.status(400).json({ success: false, message: 'User with this email already exists, please login.' });
     }
     const otp = Math.floor(1000 + Math.random() * 9000);
 
@@ -358,11 +345,11 @@ export const sendOtpToRegisterNewUserController = async (req, res) => {
         const otpToken = JWT.sign({ email, otp: otpHash }, process.env.JWT_SECRET, { expiresIn: '1h' });
         return res.status(200).send({ success: true, message: 'OTP sent successfully!', otpToken });
 
-        
+
     } catch (error) {
         console.log(error)
         return res.status(500).send({ success: false, message: 'Failed to send OTP' });
-        
+
     }
 
 }
