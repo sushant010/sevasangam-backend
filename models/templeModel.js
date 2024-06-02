@@ -47,6 +47,26 @@ const templeSchema = new Schema({
             type: String,
             required: false
         },
+        state: {
+            type: String,
+            required: false
+        },
+        zipCode: {
+            type: String,
+            required: false
+        },
+        latitude: {
+            type: Number,
+            required: false
+        },
+        longitude: {
+            type: Number,
+            required: false
+        },
+        city: {
+            type: String,
+            required: false
+        },
         country: {
             type: String,
             required: false
