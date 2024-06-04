@@ -255,6 +255,7 @@ export const updateTempleById = async (req, res) => {
       // Directly verify if created by superadmin
       updatedData.isVerified = 1;
       updatedData.isCreated = 0;
+      updatedData.hasChangesToApprove = 0;
       updatedData.pendingChanges = null;
 
       // Update the temple
