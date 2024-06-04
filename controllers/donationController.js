@@ -242,10 +242,18 @@ export const fetchAllDonations = async (req, res) => {
         }
 
         // Filter donations based on parameters
+
+        const filteredTemples = temple ? await Temple.find({ templeName: { $regex: temple, $options: 'i' } }) : [];
+        console.log(filteredTemples)
         const filteredDonations = fetchAllDonations.items.filter(donation => {
             let isValid = true;
 
-            if (temple && donation.notes?.temple !== temple) {
+            const filterTempleIds = filteredTemples.map((val)=> val._id.toString())
+
+            console.log(filterTempleIds)
+            console.log(temple)
+
+            if(temple !== ""  &&   !filterTempleIds.includes(donation.notes?.temple)){
                 isValid = false;
             }
 

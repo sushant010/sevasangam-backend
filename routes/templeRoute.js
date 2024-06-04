@@ -19,6 +19,7 @@ import {
   addTrendingTemple,
   removeTrendingTemple,
   getAllVerifiedTemples,
+  searchTempleByName,
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../config/multer.js';
@@ -42,6 +43,7 @@ router.put('/update-temple/:id', upload.fields([
 
 // Get all temples
 router.get('/get-temples', getAllTemples);
+router.get('/search-temple-by-name', searchTempleByName); 
 
 router.get('/get-verified-temples', getAllVerifiedTemples);
 

@@ -348,6 +348,27 @@ export const getAllTemples = async (req, res) => {
   }
 };
 
+export const searchTempleByName = async (req,res)=>{
+
+  const nameString = req.query.search;
+
+  if (!nameString || typeof nameString !== 'string' ) {
+    return res.status(400).send({ success: false, message: 'Enter at-least 3 character' });
+  }
+
+  try {
+    const temples = await Temple.find({
+      templeName: { $regex: nameString, $options: 'i' }
+    });
+
+    res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count: temples.length, temples } });
+  } catch (error) {
+    console.log(error)
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples' });
+  }
+
+}
+
 
 export const getAllVerifiedTemples = async (req, res) => {
   try {
