@@ -50,6 +50,7 @@ router.get('/get-temple/:id', getTempleById);
 // router.get('/get-temple/:name', getTempleByName);
 
 router.get('/unverified-newly-created-temples', getUnverifiedNewlyCreatedTemples);
+
 router.get('/unverified-updated-by-admin-temples', getUnverifiedUpdatedByAdminTemples);
 
 // Delete a temple by ID

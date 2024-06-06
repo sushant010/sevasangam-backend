@@ -541,7 +541,7 @@ export const getFilteredTemples = async (req, res) => {
 
     const page = parseInt(req.body.page) || 1; // Parse page number from request body, default to 1 if not provided
 
-    const limit = req.body.limit ? req.body.limit : 4; // Number of temples to fetch per page
+    const limit = req.body.limit ? req.body.limit : 8; // Number of temples to fetch per page
 
     let query = {};
 
