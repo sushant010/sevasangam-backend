@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import userModel from '../models/userModel.js';
 import Temple from '../models/templeModel.js';
 import { hashPassword } from '../helpers/authHelper.js'
+import { getFilteredTemples } from './templeController.js';
 
 var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
 
@@ -229,33 +230,49 @@ export const fetchAllDonations = async (req, res) => {
         const fetchAllDonations = await instance.payments.all(options);
 
         let templeCreatorMap = {};
-        if (templeCreatedBy) {
-            // Get unique temple IDs from donations with notes
-            const templeIds = [...new Set(fetchAllDonations.items.map(donation => donation.notes?.temple).filter(id => id))];
-            // Fetch temples created by the specified user
-            const temples = await Temple.find({ _id: { $in: templeIds }, createdBy: templeCreatedBy });
-            // Map temple IDs to their creators
-            templeCreatorMap = temples.reduce((map, temple) => {
-                map[temple._id] = temple.createdBy.toString();
-                return map;
-            }, {});
-        }
 
-        // Filter donations based on parameters
+        const filteredTemples = await Temple.aggregate([
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "createdBy",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            {
+                $match: {
+                    "user.name": {
+                        $regex: templeCreatedBy ? templeCreatedBy : '',
+                        $options: 'i'
+                    
+                    },
+                    "templeName": {
+                        $regex: temple ? temple : '',
+                        $options: 'i'
+                    }
+
+                }
+            }
+        ])
+
+
+
         const filteredDonations = fetchAllDonations.items.filter(donation => {
             let isValid = true;
 
-            if (temple && donation.notes?.temple !== temple) {
+            const filterTempleIds = filteredTemples.map((val)=> val._id.toString())
+
+
+            if (!filterTempleIds.includes(donation.notes?.temple)) {
                 isValid = false;
             }
+            
 
             if (payId && donation.id !== payId) {
                 isValid = false;
             }
 
-            if (templeCreatedBy && templeCreatorMap[donation.notes?.temple] !== templeCreatedBy) {
-                isValid = false;
-            }
 
             if (donateUser && donation.notes?.donateUser) {
                 try {
@@ -271,6 +288,8 @@ export const fetchAllDonations = async (req, res) => {
             if (paymentMethod && donation.method !== paymentMethod) {
                 isValid = false;
             }
+
+            console.log(dateFrom, dateTo)
 
             if (dateFrom) {
                 const donationDate = new Date(donation.created_at * 1000);
