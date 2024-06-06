@@ -20,6 +20,7 @@ import {
   removeTrendingTemple,
   getAllVerifiedTemples,
   searchTempleByName,
+  getTempleCreators,
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../config/multer.js';
@@ -61,6 +62,8 @@ router.delete('/delete-temple/:id', deleteTempleById);
 router.post('/get-temples-by-admin', getAllTemplesByAdmin);
 
 router.post('/filter-temples', getFilteredTemples)
+
+router.get('/get-temple-creators', getTempleCreators)
 
 router.post('/verify-temple/:id', verifyTemple)
 

@@ -412,7 +412,6 @@ export const getAllVerifiedTemples = async (req, res) => {
       delete dbQuery.$or
     }
 
-    console.log(dbQuery)
     const temples = await Temple.find({ ...dbQuery, isVerified: 1 }).populate('createdBy')
     // .populate('createdBy');
     const count = temples.length;
@@ -610,6 +609,60 @@ export const getFilteredTemples = async (req, res) => {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
+
+//get creators 
+
+export const getTempleCreators = async (req, res) => {
+  const {templeNameSearchString, creatorSearchString} = req.query;
+
+  console.log(templeNameSearchString, creatorSearchString)
+  try {
+    
+  
+  const creatorsNameArr = await Temple.aggregate([
+    {
+      $match: {
+        templeName: { $regex: templeNameSearchString  ? '' : '', $options: 'i' }
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'createdBy',
+        foreignField: '_id',
+        as: 'creator'
+      }
+    },
+    {
+      $unwind: '$creator'
+    },
+    {
+      $match: {
+        'creator.name': { $regex: creatorSearchString ? creatorSearchString : ''
+          , $options: 'i' }
+      }
+    },
+    // project only unique creator names array
+    {
+      $group: {
+        _id: '$creator.name'
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        name: '$_id'
+      }
+    }
+   
+
+  ]);
+  return res.status(200).send({ success: true, data: creatorsNameArr });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ success: false, message: 'An error occurred while fetching creators' });
+  }
+}
 
 
 // Reject a temple
