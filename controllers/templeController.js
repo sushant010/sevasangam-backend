@@ -348,11 +348,11 @@ export const getAllTemples = async (req, res) => {
   }
 };
 
-export const searchTempleByName = async (req,res)=>{
+export const searchTempleByName = async (req, res) => {
 
   const nameString = req.query.search;
 
-  if (!nameString || typeof nameString !== 'string' ) {
+  if (!nameString || typeof nameString !== 'string') {
     return res.status(400).send({ success: false, message: 'Enter at-least 3 character' });
   }
 
@@ -585,6 +585,9 @@ export const getFilteredTemples = async (req, res) => {
         sort.donation = -1; // Assuming 'donation' is a field representing popularity
       } else if (sortOption === 'recentlyAdded') {
         sort.createdOn = -1;
+      } else if (sortOption === 'trending') {
+        query.isTrending = 1;
+        sort.isTrending = -1;
       }
     }
 
@@ -613,55 +616,68 @@ export const getFilteredTemples = async (req, res) => {
 //get creators 
 
 export const getTempleCreators = async (req, res) => {
-  const {templeNameSearchString, creatorSearchString} = req.query;
+  const { templeNameSearchString, creatorSearchString } = req.query;
 
   console.log(templeNameSearchString, creatorSearchString)
   try {
-    
-  
-  const creatorsNameArr = await Temple.aggregate([
-    {
-      $match: {
-        templeName: { $regex: templeNameSearchString  ? '' : '', $options: 'i' }
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'createdBy',
-        foreignField: '_id',
-        as: 'creator'
-      }
-    },
-    {
-      $unwind: '$creator'
-    },
-    {
-      $match: {
-        'creator.name': { $regex: creatorSearchString ? creatorSearchString : ''
-          , $options: 'i' }
-      }
-    },
-    // project only unique creator names array
-    {
-      $group: {
-        _id: '$creator.name'
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        name: '$_id'
-      }
-    }
-   
 
-  ]);
-  return res.status(200).send({ success: true, data: creatorsNameArr });
+
+    const creatorsNameArr = await Temple.aggregate([
+      {
+        $match: {
+          templeName: { $regex: templeNameSearchString ? '' : '', $options: 'i' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'creator'
+        }
+      },
+      {
+        $unwind: '$creator'
+      },
+      {
+        $match: {
+          'creator.name': {
+            $regex: creatorSearchString ? creatorSearchString : ''
+            , $options: 'i'
+          }
+        }
+      },
+      // project only unique creator names array
+      {
+        $group: {
+          _id: '$creator.name'
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          name: '$_id'
+        }
+      }
+
+
+    ]);
+    return res.status(200).send({ success: true, data: creatorsNameArr });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ success: false, message: 'An error occurred while fetching creators' });
   }
+}
+
+
+export const getAllStatesOfTemples = async (req, res) => {
+
+
+  const temples = await Temple.find({}).select('location.state');
+  const statesSet = new Set(temples.map(t => t.location.state).filter(v => v !== undefined && v !== null && v !== ''))
+  const states = Array.from(statesSet);
+  res.send({ success: true, data: states });
+
 }
 
 
