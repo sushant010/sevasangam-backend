@@ -61,7 +61,7 @@ router.get('/unverified-updated-by-admin-temples', getUnverifiedUpdatedByAdminTe
 router.delete('/delete-temple/:id', deleteTempleById);
 
 // get all temples by an admin
-router.post('/get-temples-by-admin',isSignin,isAdmin, getAllTemplesByAdmin);
+router.post('/get-temples-by-admin', getAllTemplesByAdmin);
 
 router.post('/filter-temples', getFilteredTemples)
 
