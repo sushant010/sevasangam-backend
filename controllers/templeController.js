@@ -1,5 +1,6 @@
 import Temple from '../models/templeModel.js';
 import userModel from '../models/userModel.js';
+import mongoose from 'mongoose';
 import cloudinary from '../config/cloudinary.js';
 
 
@@ -325,7 +326,8 @@ export const updateTempleById = async (req, res) => {
 export const getAllTemples = async (req, res) => {
   try {
 
-    const { templeName, location, isTrending } = req.query;
+    const { templeName, location, isTrending, verified, templeCreatedBy } = req.query;
+
 
     let dbQuery = {
       $or: []
@@ -354,20 +356,50 @@ export const getAllTemples = async (req, res) => {
     }
 
     if (isTrending && isTrending !== "false") {
-      console.log(isTrending)
       dbQuery.isTrending = 1
     }
 
+
+
+    if (verified && verified !== null && verified.trim() !== "") {
+      dbQuery.isVerified = verified === '1' ? 1 : { $ne: 1 };
+    }
+
+    //match templeCreated by
+
+    if(templeCreatedBy && templeCreatedBy !== null && templeCreatedBy.trim() !== "") {
+      dbQuery['templeCreatedBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
+    }
+
+   
 
 
     if (dbQuery.$or.length === 0) {
       delete dbQuery.$or
     }
 
-    console.log(dbQuery)
-    const temples = await Temple.find({ ...dbQuery }).populate('createdBy');
+    
 
-    // .populate('createdBy');
+    const temples = await Temple.aggregate([
+
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'templeCreatedBy'
+        }
+      },
+      {
+        $unwind: '$templeCreatedBy'
+      },
+      {
+        $match: {
+          ...dbQuery
+        }
+      }
+    ])
+
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -502,6 +534,7 @@ export const deleteTempleById = async (req, res) => {
 
 // Get all temples created by a user
 export const getAllTemplesByAdmin = async (req, res) => {
+  const { templeName, verified } = req.body; 
   try {
 
     const temples = await Temple.aggregate([
@@ -515,8 +548,11 @@ export const getAllTemplesByAdmin = async (req, res) => {
 
     ])
     const count = temples.length;
+
+
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
+    console.log(error)
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
