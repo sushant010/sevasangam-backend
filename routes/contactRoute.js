@@ -1,9 +1,14 @@
-import contactFormRouter from "../controllers/contactTicketController.js";
+import { createContactTicket, getAllContactTickets } from "../controllers/contactTicketController.js";
+import express from 'express';
 
-import { Router } from "express";
+const router = express.Router();
 
-const contactRoute = Router();
 
-contactRoute.use("/contact-form", contactFormRouter);
 
-export default contactRoute;
+router.post('/create-contact-form', createContactTicket);
+
+router.get('/get-all-contact-tickets', getAllContactTickets)
+
+
+export default router;
+

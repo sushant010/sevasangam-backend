@@ -5,7 +5,8 @@ import userModel from '../models/userModel.js';
 import Temple from '../models/templeModel.js';
 import { hashPassword } from '../helpers/authHelper.js'
 import { getFilteredTemples } from './templeController.js';
-
+import dotenv from 'dotenv';
+dotenv.config();
 var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
 
 
@@ -66,11 +67,22 @@ export const paymentVerification = async (req, res) => {
             }
         );
         donation.save();
+
+
+        // Fetch all payments from Razorpay
+        const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
+
+        const temple = await Temple.findById(razorPayDonation.notes.temple);
+
+        temple.donation += razorPayDonation.notes.amount;
+        await temple.save();
+
         if (!donation) {
             return res.status(404).json({ success: false, message: 'Donation not found' });
         }
 
-        res.redirect('http://localhost:5173/temples');
+
+        res.redirect(`${process.env.WEBSITE_URL}/temples`);
 
     } else {
         res.status(400).json({
@@ -245,7 +257,7 @@ export const fetchAllDonations = async (req, res) => {
                     "user.name": {
                         $regex: templeCreatedBy ? templeCreatedBy : '',
                         $options: 'i'
-                    
+
                     },
                     "templeName": {
                         $regex: temple ? temple : '',
@@ -261,13 +273,13 @@ export const fetchAllDonations = async (req, res) => {
         const filteredDonations = fetchAllDonations.items.filter(donation => {
             let isValid = true;
 
-            const filterTempleIds = filteredTemples.map((val)=> val._id.toString())
+            const filterTempleIds = filteredTemples.map((val) => val._id.toString())
 
 
             if (!filterTempleIds.includes(donation.notes?.temple)) {
                 isValid = false;
             }
-            
+
 
             if (payId && donation.id !== payId) {
                 isValid = false;

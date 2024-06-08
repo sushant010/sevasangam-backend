@@ -2,43 +2,44 @@ import mongoose from "mongoose";
 
 
 const eventModel = mongoose.Schema({
-    templeId: {
+    temple: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Temple',
         required: true
     },
-    eventName: {
+    name: {
         type: String,
         required: true,
-        default: 'Event'
+
     },
     description: {
         type: String,
         required: true,
-        default: 'Event'
+
     },
     date: {
         start: {
             type: Date,
             required: true,
-            default: 'Event'
+            default: Date.now
+
         },
         end: {
             type: Date,
             required: true,
-            default: 'Event'
+            default: Date.now + 2
         }
     },
     timing: {
         start: {
             type: String,
             required: true,
-            default: 'Event'
+            default: '08:00 AM'
         },
         end: {
             type: String,
             required: true,
-            default: 'Event'
+            default: '08:00 PM'
         }
     },
     images: { type: [String], required: false }

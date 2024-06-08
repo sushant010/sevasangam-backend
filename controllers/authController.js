@@ -322,6 +322,7 @@ export const resetPasswordComplete = async (req, res) => {
 }
 
 import sendOtpToRegisterNewUser from '../email/functions/sendOtpToRegisterNewUser.js';
+import Temple from '../models/templeModel.js';
 
 export const sendOtpToRegisterNewUserController = async (req, res) => {
     const { email } = req.body;
@@ -351,6 +352,31 @@ export const sendOtpToRegisterNewUserController = async (req, res) => {
         return res.status(500).send({ success: false, message: 'Failed to send OTP' });
 
     }
+
+}
+
+
+export const totalDonationCollectedByAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await userModel.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+
+        const temples = await Temple.find({ createdBy: id });
+        const totalDonation = temples.reduce((acc, temple) => acc + temple.donation, 0);
+
+        res.send({ success: true, message: 'Total donation fetched successfully', totalDonation });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+
 
 }
 

@@ -30,7 +30,8 @@ router.post('/fetch-donations-by-user', allDonationsByUser);
 router.post('/fetch-donations-by-admin', allDonationsByAdmin);
 
 router.post('/upload-80-certificate', pdfUpload.single('certificate'), upload80Certificate);
-router.put('/update-80-certificate',pdfUpload.single('certificate'), update80Certificate);
+
+router.put('/update-80-certificate', pdfUpload.single('certificate'), update80Certificate);
 
 
 router.post('/subscription', subscription);

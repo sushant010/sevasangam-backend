@@ -1,5 +1,5 @@
 import express from "express";
-import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete, sendOtpToRegisterNewUserController } from '../controllers/authController.js'
+import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete, sendOtpToRegisterNewUserController, totalDonationCollectedByAdmin } from '../controllers/authController.js'
 import { isAdmin, isSignin, isSuperAdmin } from '../middlewares/authMiddleware.js'
 import upload from '../config/authMulter.js';
 
@@ -35,7 +35,7 @@ router.get('/all-user', allUsersController)
 
 router.get('/all-temple-admin', allTempleAdminsController)
 
-
+router.get('/total-donation-by-admin/:id', totalDonationCollectedByAdmin)
 
 // router.delete('/delete-user/:id', isSuperAdmin, deleteUserController)
 

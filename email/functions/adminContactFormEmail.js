@@ -6,7 +6,7 @@ import { configDotenv } from "dotenv";
 
 configDotenv();
 
-const adminContactFormEmail = async (email, tittle, message) => {
+const adminContactFormEmail = async (email, title, message, url) => {
   const templatePath = path.join(
     path.resolve(),
     "/email/templates/contactFormEmailTemplate.ejs"
@@ -16,8 +16,8 @@ const adminContactFormEmail = async (email, tittle, message) => {
   const mailOptions = {
     from: process.env.EMAIL_APP_USERNAME,
     to: process.env.BUSINESS_ADMIN_CONTACT_EMAIL,
-    subject: tittle,
-    html: ejs.render(template, { tittle, email, message }),
+    subject: title,
+    html: ejs.render(template, { title, email, message, url }),
   };
 
   try {
