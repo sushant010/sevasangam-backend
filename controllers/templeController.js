@@ -540,8 +540,8 @@ export const getAllTemplesByAdmin = async (req, res) => {
     const temples = await Temple.aggregate([
       {
         $match:{
-          createdBy: new mongoose.Types.ObjectId(req.body.userId),
-          templeName: { $regex: templeName ? templeName : '', $options: 'i' },
+          createdBy: new mongoose.Types.ObjectId(req.user._id),
+          templeName: { $regex: templeName, $options: 'i' },
           ...(verified && verified !== '' && { isVerified: verified === '1' ? 1 : { $ne: 1 } })
         }
       }
