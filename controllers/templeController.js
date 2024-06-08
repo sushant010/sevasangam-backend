@@ -326,7 +326,9 @@ export const updateTempleById = async (req, res) => {
 export const getAllTemples = async (req, res) => {
   try {
 
-    const { templeName, location, isTrending } = req.query;
+    const { templeName, location, isTrending,templeCreatedBy } = req.query;
+
+    console.log(req.query)
 
     let dbQuery = {
       $or: []
@@ -355,7 +357,7 @@ export const getAllTemples = async (req, res) => {
     }
 
     if (isTrending && isTrending !== "false") {
-      console.log(isTrending)
+      // console.log(isTrending)
       dbQuery.isTrending = 1
     }
 
@@ -366,7 +368,29 @@ export const getAllTemples = async (req, res) => {
     }
 
     console.log(dbQuery)
-    const temples = await Temple.find({ ...dbQuery }).populate('createdBy');
+    const temples = await Temple.aggregate([
+      {
+        $lookup:{
+
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'createdBy'
+
+
+        },
+      },
+      {
+        $unwind: '$createdBy'
+      },
+      
+      {
+        $match: {
+          ...dbQuery,
+          ...(templeCreatedBy && templeCreatedBy !== '' && { 'createdBy.name': { $regex: templeCreatedBy, $options: 'i' } })
+      }
+      }
+    ])
 
     // .populate('createdBy');
     const count = temples.length;
