@@ -328,7 +328,6 @@ export const getAllTemples = async (req, res) => {
 
     const { templeName, location, isTrending, verified, templeCreatedBy } = req.query;
 
-    console.log(req.query)
 
     let dbQuery = {
       $or: []
