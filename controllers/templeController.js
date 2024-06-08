@@ -11,6 +11,8 @@ export const createTemple = async (req, res) => {
     const { body, files } = req;
     const parsedBody = {};
 
+
+
     Object.keys(body).forEach(key => {
       if (key.includes('.')) {
         const [parentKey, childKey] = key.split('.');
@@ -21,8 +23,21 @@ export const createTemple = async (req, res) => {
       }
     });
 
-    const { templeName, location, createdBy } = parsedBody;
+    // console.log(parsedBody)
+
+    const { templeName, location, upcomingEvents } = parsedBody;
     const { address } = location;
+
+    console.log('upcomingEvents:', JSON.stringify(upcomingEvents, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (value instanceof Date) {
+          return value.toISOString();
+        } else {
+          return JSON.stringify(value);
+        }
+      }
+      return value;
+    }, 2));
 
     if (!templeName || !address) {
       return res.status(400).send({ success: false, message: 'Temple name and address are required' });
@@ -195,6 +210,8 @@ export const updateTempleById = async (req, res) => {
     // Find the existing temple
     const existingTemple = await Temple.findById(req.params.id);
 
+    const { userUpdating } = parsedBody;
+
     if (!existingTemple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
     }
@@ -214,20 +231,31 @@ export const updateTempleById = async (req, res) => {
 
 
     // Compare updated fields with previous fields
-    const updatedFields = {};
+    // Recursive function to compare nested objects
+    const getUpdatedFields = (newObj, oldObj, parentKey = '') => {
+      const updatedFields = {};
 
+      Object.entries(newObj).forEach(([key, value]) => {
+        const fullKey = parentKey ? `${parentKey}.${key}` : key;
+        if (!excludeFields.includes(fullKey)) {
+          if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            const nestedUpdates = getUpdatedFields(value, oldObj[key] || {}, fullKey);
+            if (Object.keys(nestedUpdates).length > 0) {
+              updatedFields[key] = nestedUpdates;
+            }
+          } else {
+            if (JSON.stringify(oldObj[key]) !== JSON.stringify(value)) {
+              updatedFields[key] = value;
+            }
+          }
+        }
+      });
 
-    Object.keys(parsedBody).forEach(key => {
-      // Check if the field has changed
-      const existingValue = existingTemple[key];
-      const newValue = parsedBody[key];
+      return updatedFields;
+    };
 
-      if (JSON.stringify(existingValue) === JSON.stringify(newValue)) {
-        updatedFields[key] = newValue;
-      }
-    });
-
-
+    // Compare updated fields with previous fields
+    const updatedFields = getUpdatedFields(parsedBody, existingTemple);
 
     // Prepare updated data
     let updatedData = {
@@ -253,7 +281,7 @@ export const updateTempleById = async (req, res) => {
     };
 
     // Check if createdBy is superadmin
-    if (parsedBody.createdBy && parsedBody.createdBy.role === 2) {
+    if (userUpdating == 2) {
       // Directly verify if created by superadmin
       updatedData.isVerified = 1;
       updatedData.isCreated = 0;
@@ -281,7 +309,7 @@ export const updateTempleById = async (req, res) => {
       };
 
       // Update only pending changes
-      const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, { pendingChanges, hasChangesToApprove: 1 }, { new: true, runValidators: true });
+      const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, { pendingChanges, hasChangesToApprove: 1, isCreated: 0 }, { new: true, runValidators: true });
 
       res.status(200).send({ success: true, message: 'Temple submitted for review', data: updatedTemple });
     }
@@ -299,8 +327,7 @@ export const updateTempleById = async (req, res) => {
 export const getAllTemples = async (req, res) => {
   try {
 
-    const { templeName, location, isTrending, verified, templeCreatedBy } = req.query;
-
+    const { templeName, location, isTrending } = req.query;
 
     let dbQuery = {
       $or: []
@@ -329,50 +356,20 @@ export const getAllTemples = async (req, res) => {
     }
 
     if (isTrending && isTrending !== "false") {
+      console.log(isTrending)
       dbQuery.isTrending = 1
     }
 
-
-
-    if (verified && verified !== null && verified.trim() !== "") {
-      dbQuery.isVerified = verified === '1' ? 1 : { $ne: 1 };
-    }
-
-    //match templeCreated by
-
-    if(templeCreatedBy && templeCreatedBy !== null && templeCreatedBy.trim() !== "") {
-      dbQuery['templeCreatedBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
-    }
-
-   
 
 
     if (dbQuery.$or.length === 0) {
       delete dbQuery.$or
     }
 
-    
+    console.log(dbQuery)
+    const temples = await Temple.find({ ...dbQuery }).populate('createdBy');
 
-    const temples = await Temple.aggregate([
-
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'createdBy',
-          foreignField: '_id',
-          as: 'templeCreatedBy'
-        }
-      },
-      {
-        $unwind: '$templeCreatedBy'
-      },
-      {
-        $match: {
-          ...dbQuery
-        }
-      }
-    ])
-
+    // .populate('createdBy');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -459,7 +456,7 @@ export const getAllVerifiedTemples = async (req, res) => {
 // Get a single temple by ID
 export const getTempleById = async (req, res) => {
   try {
-    const temple = await Temple.findById(req.params.id);
+    const temple = await Temple.findById(req.params.id).populate('createdBy');
     if (!temple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
     }
@@ -508,24 +505,22 @@ export const deleteTempleById = async (req, res) => {
 // Get all temples created by a user
 export const getAllTemplesByAdmin = async (req, res) => {
   const { templeName, verified } = req.body; 
+
   try {
 
     const temples = await Temple.aggregate([
       {
         $match:{
           createdBy: new mongoose.Types.ObjectId(req.body.userId),
-          templeName: { $regex: templeName, $options: 'i' },
+          templeName: { $regex: templeName ? templeName : '', $options: 'i' },
           ...(verified && verified !== '' && { isVerified: verified === '1' ? 1 : { $ne: 1 } })
         }
       }
 
     ])
     const count = temples.length;
-
-
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
-    console.log(error)
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
@@ -557,7 +552,7 @@ export const getUnverifiedNewlyCreatedTemples = async (req, res) => {
 export const getUnverifiedUpdatedByAdminTemples = async (req, res) => {
 
   try {
-    const temples = await Temple.find({ hasChangesToApprove: 1, isCreated: 0 }).populate('createdBy');
+    const temples = await Temple.find({ hasChangesToApprove: 1 }).populate('createdBy');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -608,7 +603,7 @@ export const getFilteredTemples = async (req, res) => {
 
     const page = parseInt(req.body.page) || 1; // Parse page number from request body, default to 1 if not provided
 
-    const limit = req.body.limit ? req.body.limit : 8; // Number of temples to fetch per page
+    const limit = req.body.limit ? req.body.limit : 3; // Number of temples to fetch per page
 
     let query = {};
 
@@ -654,7 +649,7 @@ export const getFilteredTemples = async (req, res) => {
       .limit(limit); // Limit the number of documents returned per page
 
 
-    res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
+    res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples }, count: temples.length });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
@@ -753,7 +748,7 @@ export const rejectTemple = async (req, res) => {
 
 export const reviewPendingChanges = async (req, res) => {
   try {
-    const temple = await Temple.findById(req.params.id);
+    const temple = await Temple.findById(req.params.id).populate('createdBy');
 
     if (!temple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
@@ -762,8 +757,9 @@ export const reviewPendingChanges = async (req, res) => {
     if (!temple.pendingChanges) {
       return res.status(200).send({ success: false, message: 'No pending changes for this temple' });
     }
+    const createdBy = await userModel.findById(temple.createdBy);
 
-    res.status(200).send({ success: true, message: 'Pending changes retrieved successfully', data: temple.pendingChanges });
+    res.status(200).send({ success: true, message: 'Pending changes retrieved successfully', data: temple.pendingChanges, createdBy });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Failed to retrieve pending changes', error });
   }
@@ -849,3 +845,9 @@ export const removeTrendingTemple = async (req, res) => {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
+
+
+
+
+
+
