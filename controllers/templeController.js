@@ -1,7 +1,6 @@
 import Temple from '../models/templeModel.js';
 import userModel from '../models/userModel.js';
 import mongoose from 'mongoose';
-import mongoose from 'mongoose';
 import cloudinary from '../config/cloudinary.js';
 
 
