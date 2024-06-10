@@ -63,6 +63,11 @@ export const createTemple = async (req, res) => {
     }
 
     const userWhoCreated = await userModel.findOne({ _id: parsedBody.createdBy });
+    if (userWhoCreated.role === 0) {
+      userWhoCreated.role = 1;
+      await userWhoCreated.save();
+    }
+
     if (!userWhoCreated) {
       return res.status(404).send({ success: false, message: 'User not found' });
     }
@@ -71,6 +76,7 @@ export const createTemple = async (req, res) => {
     await userWhoCreated.save();
 
     const isVerified = userWhoCreated.role === 2 ? 1 : 0;
+
 
     const newTemple = new Temple({
       ...parsedBody,
