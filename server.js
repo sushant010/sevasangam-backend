@@ -29,9 +29,13 @@ app.use(express.urlencoded({ extended: false }));
 // mongodb connect
 mongoConnect();
 
-const __filename = fileURLToPath(import.meta.url)
+// const __filename = fileURLToPath(import.meta.url)
 
-const __dirname = path.dirname(__filename)
+// const __dirname = path.dirname(__filename)
+
+const __dirname = path.dirname("");
+const buildPath = path.join(__dirname, '../sevasangam-frontend/build');
+app.use(express.static(buildPath));
 
 // middleware
 
