@@ -356,10 +356,9 @@ export const getAllTemples = async (req, res) => {
     }
 
     if (isTrending && isTrending !== "false") {
+      // console.log(isTrending)
       dbQuery.isTrending = 1
     }
-
-
 
     if (verified && verified !== null && verified.trim() !== "") {
       dbQuery.isVerified = verified === '1' ? 1 : { $ne: 1 };
@@ -368,38 +367,39 @@ export const getAllTemples = async (req, res) => {
     //match templeCreated by
 
     if(templeCreatedBy && templeCreatedBy !== null && templeCreatedBy.trim() !== "") {
-      dbQuery['templeCreatedBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
+      dbQuery['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
     }
 
-   
 
 
     if (dbQuery.$or.length === 0) {
       delete dbQuery.$or
     }
-
-    
-
     const temples = await Temple.aggregate([
-
       {
-        $lookup: {
+        $lookup:{
+
           from: 'users',
           localField: 'createdBy',
           foreignField: '_id',
-          as: 'templeCreatedBy'
-        }
+          as: 'createdBy'
+
+
+        },
       },
       {
-        $unwind: '$templeCreatedBy'
+        $unwind: '$createdBy'
       },
+      
       {
         $match: {
-          ...dbQuery
-        }
+          ...dbQuery,
+          ...(templeCreatedBy && templeCreatedBy !== '' && { 'createdBy.name': { $regex: templeCreatedBy, $options: 'i' } })
+      }
       }
     ])
 
+    // .populate('createdBy');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -535,24 +535,22 @@ export const deleteTempleById = async (req, res) => {
 // Get all temples created by a user
 export const getAllTemplesByAdmin = async (req, res) => {
   const { templeName, verified } = req.body; 
+
   try {
 
     const temples = await Temple.aggregate([
       {
         $match:{
-          createdBy: new mongoose.Types.ObjectId(req.user._id),
-          templeName: { $regex: templeName, $options: 'i' },
+          createdBy: new mongoose.Types.ObjectId(req.body.userId),
+          templeName: { $regex: templeName ? templeName : '', $options: 'i' },
           ...(verified && verified !== '' && { isVerified: verified === '1' ? 1 : { $ne: 1 } })
         }
       }
 
     ])
     const count = temples.length;
-
-
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
-    console.log(error)
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
@@ -877,7 +875,6 @@ export const removeTrendingTemple = async (req, res) => {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
-
 
 
 
