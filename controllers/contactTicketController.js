@@ -30,11 +30,37 @@ export const createContactTicket = async (req, res) => {
 
 export const getAllContactTickets = async (req, res) => {
   try {
-    const contactTickets = await contactTicketModel.find();
-    res.status(200).json(contactTickets);
+    const { email, title, message, status } = req.body;
+
+    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.body.page) || 1;
+
+    Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
+
+    let query = {};
+
+    if (email) query.email = { $regex: email, $options: 'i' };
+    if (title) query.title = { $regex: title, $options: 'i' };
+    if (message) query.message = { $regex: message, $options: 'i' };
+    if (status) query.status = { $regex: status, $options: 'i' };
+
+    const contactTickets = await contactTicketModel.find({ ...query }).skip((page - 1) * limit).limit(limit);
+    res.status(200).send({ success: true, message: "Contact ticket fetched", contactTickets });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Error getting contact tickets" });
+  }
+
+}
+
+export const updateContactTicketStatus = async (req, res) => {
+  try {
+    const { id, status } = req.body;
+    const contactTicket = await contactTicketModel.findByIdAndUpdate(id, { status });
+    res.status(200).send({ success: true, message: "Contact ticket status updated", contactTicket });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "Error getting contact tickets" });
   }
 
 }

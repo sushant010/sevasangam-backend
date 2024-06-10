@@ -16,6 +16,7 @@ const contactTicketSchema = mongoose.Schema({
   status: {
     type: String,
     required: true,
+    default: "Pending",
   },
   createdAt: {
     type: Date,
