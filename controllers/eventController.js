@@ -40,13 +40,13 @@ export const fetchEvent = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const event = await eventModel.findById(id);
+        const event = await eventModel.findById(id).populate('temple');
 
         if (!event) {
             return res.status(404).json({ message: 'Event not found' });
         }
 
-        res.status(200).send({ success: true, message: 'Event fetched successfully', data: event });
+        res.status(200).send({ success: true, message: 'Event fetched successfully', event });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: 'Internal server error' });

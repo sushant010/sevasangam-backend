@@ -142,6 +142,7 @@ const templeSchema = new Schema({
 });
 
 
+templeSchema.index({ templeName: 'text' });
 
 const Temple = mongoose.model('Temple', templeSchema);
 export default Temple;

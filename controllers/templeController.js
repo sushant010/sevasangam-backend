@@ -366,7 +366,7 @@ export const getAllTemples = async (req, res) => {
 
     //match templeCreated by
 
-    if(templeCreatedBy && templeCreatedBy !== null && templeCreatedBy.trim() !== "") {
+    if (templeCreatedBy && templeCreatedBy !== null && templeCreatedBy.trim() !== "") {
       dbQuery['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
     }
 
@@ -377,7 +377,7 @@ export const getAllTemples = async (req, res) => {
     }
     const temples = await Temple.aggregate([
       {
-        $lookup:{
+        $lookup: {
 
           from: 'users',
           localField: 'createdBy',
@@ -390,12 +390,12 @@ export const getAllTemples = async (req, res) => {
       {
         $unwind: '$createdBy'
       },
-      
+
       {
         $match: {
           ...dbQuery,
           ...(templeCreatedBy && templeCreatedBy !== '' && { 'createdBy.name': { $regex: templeCreatedBy, $options: 'i' } })
-      }
+        }
       }
     ])
 
@@ -534,13 +534,13 @@ export const deleteTempleById = async (req, res) => {
 
 // Get all temples created by a user
 export const getAllTemplesByAdmin = async (req, res) => {
-  const { templeName, verified } = req.body; 
+  const { templeName, verified } = req.body;
 
   try {
 
     const temples = await Temple.aggregate([
       {
-        $match:{
+        $match: {
           createdBy: new mongoose.Types.ObjectId(req.body.userId),
           templeName: { $regex: templeName ? templeName : '', $options: 'i' },
           ...(verified && verified !== '' && { isVerified: verified === '1' ? 1 : { $ne: 1 } })
@@ -618,6 +618,7 @@ export const verifyTemple = async (req, res) => {
 
 export const getFilteredTemples = async (req, res) => {
   try {
+    // Extract filters and options from the request body
     const {
       templeName,
       typeOfOrganization,
@@ -628,17 +629,30 @@ export const getFilteredTemples = async (req, res) => {
       city
     } = req.body; // Note: Using `req.query` for GET requests
 
-    //remove empty strings
+    // Remove empty strings from the request body
     Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
 
-    const page = parseInt(req.body.page) || 1; // Parse page number from request body, default to 1 if not provided
+    // Set default values for pagination
+    const page = parseInt(req.body.page) || 1; // Default page number is 1
+    const limit = req.body.limit ? req.body.limit : 20; // Default limit is 20 temples per page
 
-    const limit = req.body.limit ? req.body.limit : 3; // Number of temples to fetch per page
-
+    // Initialize query and sort objects
     let query = {};
+    let sort = {};
 
-    if (templeName) query.templeName = { $regex: templeName, $options: 'i' };
+    // Filter by temple name using text search and set sort order by relevance
+    if (templeName) {
+      query.$text = { $search: templeName };
+      sort = {
+        score: { $meta: 'textScore' },
+        createdOn: -1
+      };
+    }
+
+    // Filter by type of organization using regex for case-insensitive search
     if (typeOfOrganization) query.typeOfOrganization = { $regex: typeOfOrganization, $options: 'i' };
+
+    // Filter by address using regex for case-insensitive search
     if (address) {
       query.$or = [
         { 'location.address': { $regex: address, $options: 'i' } },
@@ -647,40 +661,40 @@ export const getFilteredTemples = async (req, res) => {
         { 'location.city': { $regex: address, $options: 'i' } }
       ];
     }
+
+    // Filter by verification status
     if (isVerified) query.isVerified = isVerified === '1';
+
+    // Filter by state and city
     if (state) query['location.state'] = state;
     if (city) query['location.city'] = city;
 
-    let sort = {};
+    // Additional sorting options based on provided sortOption
     if (sortOption) {
       if (sortOption === 'mostPopular') {
-        sort.donation = -1; // Assuming 'donation' is a field representing popularity
+        sort.donation = -1; // Sort by donation in descending order (most popular)
       } else if (sortOption === 'recentlyAdded') {
-        sort.createdOn = -1;
+        sort.createdOn = -1; // Sort by creation date in descending order (recently added)
       } else if (sortOption === 'trending') {
-        query.isTrending = 1;
-        sort.isTrending = -1;
+        query.isTrending = 1; // Filter by trending status
+        sort.isTrending = -1; // Sort by trending status in descending order
       }
     }
 
-    // const temples = await Temple.find({ isVerified: 1 })
-    //   .populate('createdBy')
-    //   .sort(sort)
-    // .skip((page - 1) * limit) // Skip the required number of documents
-    // .limit(limit); // Limit the number of documents returned per page
-
+    // Query the database for temples matching the filters and sort options
     const temples = await Temple.find({
       isVerified: 1,
       ...query
     })
-      .populate('createdBy')
-      .sort(sort)
-      .skip((page - 1) * limit) // Skip the required number of documents
+      .populate('createdBy') // Populate the createdBy field
+      .sort(sort) // Apply sorting
+      .skip((page - 1) * limit) // Skip the documents for pagination
       .limit(limit); // Limit the number of documents returned per page
 
-
+    // Send the response with the filtered temples and the count
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples }, count: temples.length });
   } catch (error) {
+    console.log(error)
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
