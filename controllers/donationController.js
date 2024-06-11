@@ -7,6 +7,7 @@ import { hashPassword } from '../helpers/authHelper.js'
 import { getFilteredTemples } from './templeController.js';
 import dotenv from 'dotenv';
 import send80GformRequestToAdmin from '../email/functions/80G-form/send80GformRequestToAdmin.js';
+import send80GformRequestToSuperAdmin from "./../email/functions/80G-form/send80GfromRequestToSuperAdmin.js"
 dotenv.config();
 var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
 
@@ -488,15 +489,11 @@ export const request80Certificate = async (req, res) => {
         const donorDetails = JSON.parse(donationDetails.notes.donateUser)
 
         await send80GformRequestToAdmin(adminEmail, donorDetails.email, adminName, amount, donationDetails.created_at, templeName, templeId, donationDetails.currency,donorDetails.name, donationDetails.id);
-            
+        await send80GformRequestToSuperAdmin(process.env.WEBSITE_URL, donorDetails.name, templeId, templeName, donationDetails.id, amount, donationDetails.currency, donationDetails.created_at, temple.contactPerson.name, temple.contactPerson.email, temple.contactPerson.mobile, adminName);
 
-        console.log(donationDetails)
+        // res.status(200).json({ success: true, message: '80G certificate requested successfully' });
 
-
-        //return
-        res.status(200).json({ success: true, message: '80G certificate requested successfully' });
-
-        return;
+        // return;
 
         // Fetch all payments
         const donation = await instance.payments.fetch(id);

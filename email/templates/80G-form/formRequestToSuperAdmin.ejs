@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>80G From Request to SuperAdmin</title>
+    <style>
+      .container-wrapper {
+        width: 100%;
+        color: #424242;
+      }
+      .container-wrapper .wrapper {
+        width: 100%;
+        max-width: 500px;
+        margin: auto;
+        background-color: #e1e6e1;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .container-wrapper .wrapper .header {
+        background-color: #ff395c;
+        color: white;
+        display: block;
+      }
+      h3 {
+        padding: 10px;
+        text-align: center;
+        font-size: 1.5rem;
+        margin: 0;
+      }
+      p {
+        /* padding: 10px; */
+        margin: 0;
+        padding: 0;
+        padding: 5px;
+      }
+
+      .dearLine {
+        font-weight: 700;
+      }
+
+      .container-wrapper .wrapper .mainSection {
+        padding: 10px 20px;
+      }
+
+      .container-wrapper .wrapper .mainSection table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        width: fit-content;
+        border: 2px solid #ff395c;
+        margin: auto;
+      }
+
+      .container-wrapper .wrapper .mainSection table th,
+      .container-wrapper .wrapper .mainSection table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 2px solid #ff395c;
+        border-right: 2px solid #ff395c;
+        font-weight: 700;
+      }
+
+      .container-wrapper .wrapper .mainSection table td a {
+        color: #424242;
+      }
+
+      .container-wrapper .wrapper .mainSection table td {
+        color: #424242;
+      }
+
+      .container-wrapper .wrapper .footer {
+        padding: 10px;
+        text-align: center;
+        background-color: #ff395c;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-wrapper">
+      <div class="wrapper">
+        <dv class="header">
+          <h3 class="header">80G from Request</h3>
+        </dv>
+        <div class="mainSection">
+          <p class="dearLine">Dear Super Admin,</p>
+          <p>
+            There is a request for 80G form from the user. Please find the
+            details below:
+          </p>
+          <table>
+            <!-- For Superadmin - show temple name, requested by whom , temple name, donation amount for which it was requested, admin of that temple etc -->
+            <tr>
+              <th>Requested By</th>
+              <td><%= requestedBy %></td>
+            </tr>
+            <tr>
+              <th>Temple name</th>
+              <td>
+                <a href="<%= backendUrl %>/temple/<%= templeId %>"
+                  ><%= templeName %></a
+                >
+              </td>
+            </tr>
+            <tr>
+              <th>Donation amount</th>
+              <td>
+                <a
+                  href="<%= backendUrl %>/admin/donations?payId=<%= paymentId %>"
+                  ><%= donationAmount %> <%= donationCurrency %></a
+                >
+              </td>
+            </tr>
+            <tr>
+              <th>Donation date</th>
+              <td><%= donationDate %></td>
+            </tr>
+            <tr>
+              <th>Admin of the temple</th>
+              <td><%= adminName %></td>
+            </tr>
+            <tr>
+              <th>Temple Contact Person</th>
+              <td>
+                <%= contactName %> <br />
+                <%= contactEmail %> <br />
+                <%= contactNo %>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="footer">
+          <p>This email is from sevaSangam</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
