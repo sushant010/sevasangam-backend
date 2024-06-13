@@ -551,9 +551,13 @@ export const update80Certificate = async (req, res) => {
 
 
 export const subscription = async (req, res) => {
-    const amount = req.body.amount;
+    let amount = req.body.amount;
     const userId = req.user ? req.user._id : 'no_user_id';
     const currency = req.body.currency;
+
+    if(currency === "INR"){
+        amount = amount*100
+    }
 
     //create razorpay plan
 
@@ -569,9 +573,6 @@ export const subscription = async (req, res) => {
 
             }
         });
-        // console.log(plan)
-
-        // res.json({ success: true, plan });
 
         //create razorpay subscription
         const subscription = await instance.subscriptions.create({
