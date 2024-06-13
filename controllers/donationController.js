@@ -6,6 +6,8 @@ import Temple from '../models/templeModel.js';
 import { hashPassword } from '../helpers/authHelper.js'
 import { getFilteredTemples } from './templeController.js';
 import dotenv from 'dotenv';
+import send80GformRequestToAdmin from '../email/functions/80G-form/send80GformRequestToAdmin.js';
+import send80GformRequestToSuperAdmin from "./../email/functions/80G-form/send80GfromRequestToSuperAdmin.js"
 dotenv.config();
 var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
 
@@ -473,6 +475,26 @@ export const request80Certificate = async (req, res) => {
     try {
         const { id } = req.body;
 
+        //fetch payment details
+
+        const donationDetails = await instance.payments.fetch(id);
+
+        const amount = donationDetails.amount / 100;
+        const templeId = donationDetails.notes.temple;
+        const temple = await Temple.findById(templeId);
+        const templeName = temple.templeName;
+        const templeAdminDetails = await Temple.findById(templeId).populate('createdBy');
+        const adminEmail = templeAdminDetails.createdBy.email;
+        const adminName = templeAdminDetails.createdBy.name;
+        const donorDetails = JSON.parse(donationDetails.notes.donateUser)
+
+        await send80GformRequestToAdmin(adminEmail, donorDetails.email, adminName, amount, donationDetails.created_at, templeName, templeId, donationDetails.currency,donorDetails.name, donationDetails.id);
+        await send80GformRequestToSuperAdmin(process.env.WEBSITE_URL, donorDetails.name, templeId, templeName, donationDetails.id, amount, donationDetails.currency, donationDetails.created_at, temple.contactPerson.name, temple.contactPerson.email, temple.contactPerson.mobile, adminName);
+
+        // res.status(200).json({ success: true, message: '80G certificate requested successfully' });
+
+        // return;
+
         // Fetch all payments
         const donation = await instance.payments.fetch(id);
         const fetchDonation = await Donation.findOneAndUpdate({ razorpay_payment_id: id }, { is80CertificateRequested: true }, { new: true });
@@ -481,6 +503,7 @@ export const request80Certificate = async (req, res) => {
         }
         res.status(200).json({ success: true, message: '80G certificate requested successfully', donation });
     } catch (error) {
+        console.log(error)
         res.status(500).json({ success: false, message: error.message });
     }
 };

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requested 80G fro,</title>
+    <style>
+      .container {
+        width: 100%;
+        color: #424242;
+      }
+      .container > .wrapper {
+        width: 100%;
+        max-width: 500px;
+        margin: auto;
+        background-color: #e1e6e1;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .container > .wrapper > header {
+        background-color: #ff395c;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        font-size: 1.5rem;
+      }
+      .dearLine{
+        font-weight: 700;
+      }
+      .container > .wrapper > .mainSection {
+        padding: 10px 20px;
+      }
+      .container > .wrapper > .mainSection > table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        width: fit-content;
+        border: 2px solid #ff395c;
+        margin: auto;
+      }
+
+      .container > .wrapper > .mainSection > table th,
+      .container > .wrapper > .mainSection > table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 2px solid #ff395c;
+        border-right: 2px solid #ff395c;
+        font-weight: 700;
+      }
+
+      .container > .wrapper > .mainSection > table td a{
+        color: #424242;
+
+      }
+      .container > .wrapper > .mainSection > table td {
+        color: #424242;
+      }
+      .container > .wrapper > .mainSection > .buttonContainer {
+        margin: auto;
+        margin-top: 40px;
+      }
+      .container > .wrapper > .mainSection > .buttonContainer > .uploadButton {
+        padding: 10px 20px;
+        text-align: center;
+        background-color: #ff395c;
+        margin: auto;
+        text-decoration: none;
+        color: white;
+        display: block;
+        width: fit-content;
+      }
+      .description {
+        color: #565656;
+        text-align: center;
+      }
+      footer {
+        background-color: #ff395c;
+        color: white;
+        padding: 10px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="wrapper">
+        <header>80G Form Request</header>
+        <div class="mainSection">
+          <p class="dearLine">Dear <%= adminName %>,</p>
+          <p>
+            <%= name %> has requested for 80G form. Here are the details of
+            Requestee :
+          </p>
+          <table>
+            <tr>
+              <th>Name</th>
+              <td><%= name %></td>
+            </tr>
+            <tr>
+              <th>Email</th>
+              <td><%= email %></td>
+            </tr>
+            <tr>
+              <th>Donation amount</th>
+              <td>
+                <a
+                  href="<%= backendUrl %>/admin/donations?payId=<%= paymentId %>"
+                  ><%= donationAmount %> <%= donationCurrency %></a
+                >
+              </td>
+            </tr>
+            <tr>
+              <th>Donation date</th>
+              <td><%= donationDate %></td>
+            </tr>
+            <tr>
+              <th>Temple name</th>
+              <td>
+                <a href="<%= backendUrl %>/temple/<%= templeId %>"
+                  ><%= templeName %></a
+                >
+              </td>
+            </tr>
+          </table>
+          <div class="buttonContainer">
+            <a
+              href="<%= backendUrl %>/admin/donations?payId=<%= paymentId %>"
+              class="uploadButton"
+              >upload 80G form</a
+            >
+            <p class="description">
+              If the above text is not visible please visit <%= backendUrl
+              %>/admin/donations?payId=<%= paymentId %> to upload it
+            </p>
+          </div>
+        </div>
+        <footer>This email is from sevaSangam</footer>
+      </div>
+    </div>
+  </body>
+</html>
