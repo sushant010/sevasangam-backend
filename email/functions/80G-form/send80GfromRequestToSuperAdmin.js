@@ -10,6 +10,7 @@ configDotenv();
 
 const send80GformRequestToSuperAdmin = async (
   backendUrl,
+  donationId,
   requestedBy,
   templeId,
   templeName,
@@ -35,6 +36,7 @@ const send80GformRequestToSuperAdmin = async (
     subject: "80G Form Request",
     html: ejs.render(template, {
       backendUrl: process.env.WEBSITE_URL,
+      donationId: donationId,
       donationDate: new Date(donationDate * 1000).toDateString(),
       donationAmount: donationAmount,
       donationCurrency: donationCurrency,

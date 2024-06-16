@@ -697,6 +697,8 @@ export const getFilteredTemples = async (req, res) => {
       .skip((page - 1) * limit) // Skip the documents for pagination
       .limit(limit); // Limit the number of documents returned per page
 
+
+
     // Send the response with the filtered temples and the count
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples }, count: temples.length });
   } catch (error) {

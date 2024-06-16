@@ -16,15 +16,26 @@ const donationSchema = new Schema({
         ref: 'User',
         required: false,
     },
+    method: {
+        type: String,
+        required: true,
+    },
+    status: {
+        type: String,
+        required: true,
+    },
+    currency: {
+        type: String,
+        required: true,
+    },
     donateUser: {
-        name: { type: String, required: false },
-        email: { type: String, required: false },
-        phone: { type: String, required: false },
+        type: String,
+        required: true,
     },
     temple: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Temple',
-        required: false,
+        required: true,
     },
     is80CertificateRequested: {
         type: Boolean,
@@ -34,7 +45,7 @@ const donationSchema = new Schema({
     {
         type: String,
         required: false
-    }, 
+    },
     razorpay_order_id: {
         type: String,
         required: true,
