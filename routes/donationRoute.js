@@ -2,7 +2,7 @@ import express from 'express';
 import {
     checkout,
     paymentVerification,
-    subscription,
+
     fetchAllDonations,
     request80Certificate,
     allDonationsByUser,
@@ -33,8 +33,6 @@ router.post('/fetch-donations-by-admin', allDonationsByAdmin);
 router.post('/upload-80-certificate', pdfUpload.single('certificate'), upload80Certificate);
 
 router.put('/update-80-certificate', pdfUpload.single('certificate'), update80Certificate);
-
-router.post('/subscription', subscription);
 
 router.post('/fetch-donation-last-30-days', donationInLast30Days);
 

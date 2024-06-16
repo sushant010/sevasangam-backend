@@ -9,6 +9,7 @@ import authRoute from './routes/authRoute.js'
 import templeRoute from './routes/templeRoute.js'
 import eventRoute from './routes/eventRoute.js'
 import donationRoute from './routes/donationRoute.js'
+import subscriptionRoute from './routes/subscriptionRoute.js'
 import contactRoute from './routes/contactRoute.js'
 import subscriptionEmailRoute from './routes/subscriptionEmailRoute.js'
 // import categoryRoute from './routes/categoryRoute.js'
@@ -61,23 +62,13 @@ app.use('/api/v1/temple', templeRoute);
 
 app.use('/api/v1/donation', donationRoute);
 
+app.use('/api/v1/subscription', subscriptionRoute);
+
 app.use('/api/v1/contact', contactRoute)
 
 app.use('/api/v1/temple/event', eventRoute)
 
 app.use('/api/v1/subscriptionEmail', subscriptionEmailRoute)
-
-// app.use('/api/v1/category', categoryRoute)
-
-// app.use('/api/v1/product', productRoute)
-
-
-
-
-// app.use('*', function (req, res) {
-//     const index = path.join(__dirname, './client/build/index.html')
-//     res.sendFile(index);
-// });
 
 
 app.listen(PORT, () => {

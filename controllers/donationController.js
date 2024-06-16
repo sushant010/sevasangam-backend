@@ -8,6 +8,7 @@ import { getFilteredTemples } from './templeController.js';
 import dotenv from 'dotenv';
 import send80GformRequestToAdmin from '../email/functions/80G-form/send80GformRequestToAdmin.js';
 import send80GformRequestToSuperAdmin from "./../email/functions/80G-form/send80GfromRequestToSuperAdmin.js"
+import Subscription from '../models/subscriptionModel.js';
 dotenv.config();
 var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
 
@@ -525,10 +526,11 @@ export const donationInLast30Days = async (req, res) => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
 
-
+        console.log(`id is ${id}`)
         let donationInLast30DaysAmount = 0;
         const allDonation = await Donation.find({});
-        const donations = allDonation.filter(donation => donation.temple._id == id);
+
+        const donations = allDonation && allDonation.filter(donation => donation.temple && donation.temple._id == id);
 
         donations.forEach(donation => {
 

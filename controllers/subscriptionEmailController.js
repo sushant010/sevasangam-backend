@@ -1,8 +1,6 @@
 import subscriptionEmailModel from "../models/subscriptionEmailModel.js";
 
 
-// subscriptionEmailRouter.post("/subscribe", async (req, res) => {
-
 export const subscribe = async (req, res) => {
   if (!req.body) {
     return res.status(404).json({ message: "No data provided" });
@@ -23,12 +21,6 @@ export const subscribe = async (req, res) => {
     res.status(500).json({ message: "Error subscribing email" });
   }
 }
-// });
-
-// subscriptionEmailRouter.post(
-//   "/getallSubscriptionEmails",
-//   isSignin,
-//   isSuperAdmin,
 
 export const getallSubscriptionEmails =
   async (req, res) => {
@@ -40,5 +32,5 @@ export const getallSubscriptionEmails =
       res.status(500).json({ message: "Error getting subscription emails" });
     }
   }
-// );
+
 
