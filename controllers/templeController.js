@@ -774,6 +774,16 @@ export const getAllStatesOfTemples = async (req, res) => {
 
 }
 
+export const getAllCitiesOfTemples = async (req, res) => {
+
+
+  const temples = await Temple.find({}).select('location.city');
+  const CitiesSet = new Set(temples.map(t => t.location.city).filter(v => v !== undefined && v !== null && v !== ''))
+  const cities = Array.from(CitiesSet);
+  res.send({ success: true, data: cities });
+
+}
+
 
 // Reject a temple
 export const rejectTemple = async (req, res) => {

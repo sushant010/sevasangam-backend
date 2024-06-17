@@ -22,6 +22,7 @@ import {
   searchTempleByName,
   getTempleCreators,
   getAllStatesOfTemples,
+  getAllCitiesOfTemples,
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../config/multer.js';
@@ -84,6 +85,9 @@ router.delete('/remove-trending-temple/:id', removeTrendingTemple)
 router.get('/search-temple-suggestions', getSearchSuggestionTempleName)
 
 router.get('/get-states-of-temples', getAllStatesOfTemples)
+
+
+router.get('/get-cities-of-temples', getAllCitiesOfTemples)
 
 
 export default router;
