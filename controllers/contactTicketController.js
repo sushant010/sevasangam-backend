@@ -44,7 +44,7 @@ export const getAllContactTickets = async (req, res) => {
     if (message) query.message = { $regex: message, $options: 'i' };
     if (status) query.status = { $regex: status, $options: 'i' };
 
-    const contactTickets = await contactTicketModel.find({ ...query }).skip((page - 1) * limit).limit(limit);
+    const contactTickets = await contactTicketModel.find({ ...query }).skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
     res.status(200).send({ success: true, message: "Contact ticket fetched", contactTickets });
   } catch (error) {
     console.log(error);

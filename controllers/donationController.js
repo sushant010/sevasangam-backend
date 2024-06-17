@@ -79,6 +79,13 @@ export const paymentVerification = async (req, res) => {
         );
 
         await donation.save();
+
+        const temple = await Temple.findById(razorPayDonation.notes.temple);
+        temple.donation += razorPayDonation.amount / 100;
+        await temple.save();
+
+
+
         res.redirect(`${process.env.WEBSITE_URL}/temples`);
 
     } else {
@@ -252,7 +259,7 @@ export const fetchAllDonations = async (req, res) => {
 
         // Fetch all donations from the database
         const donations = await Donation.find(query)
-            .sort({ created_at: -1 })
+            .sort({ date: -1 })
             .limit(limit)
             .skip((page - 1) * limit);
 
@@ -282,15 +289,14 @@ export const allDonationsByUser = async (req, res) => {
         };
 
         // Fetch donations
-        const fetchAllRazorpayAllDonations = await instance.payments.all(options);
 
-        const razorpayAllDonations = fetchAllRazorpayAllDonations.items;
+        const allDonations = await Donation.find({}).sort({ date: -1 });
 
-        const userDonations = razorpayAllDonations.filter(
+        const userDonations = allDonations.filter(
             (donation) => {
-                if (donation.notes && donation.notes.donateUser) {
+                if (donation?.donateUser) {
                     try {
-                        const donateUser = JSON.parse(donation.notes.donateUser);
+                        const donateUser = JSON.parse(donation.donateUser);
                         return donateUser.email === email;
                     } catch (error) {
                         // Handle JSON parse error if donateUser is not a valid JSON string
@@ -302,18 +308,18 @@ export const allDonationsByUser = async (req, res) => {
         );
 
 
-        const allDonations = await Donation.find({});
-        let customDonations = []
+        // const allDonations = await Donation.find({});
+        // let customDonations = []
 
-        userDonations.map(donation => {
-            const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
-            if (customDonation) {
-                customDonations.push(customDonation)
-            }
+        // userDonations.map(donation => {
+        //     const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
+        //     if (customDonation) {
+        //         customDonations.push(customDonation)
+        //     }
 
-        })
+        // })
 
-        res.status(200).json({ success: true, message: 'Donations retrieved successfully', razorpayDonations: userDonations, donations: customDonations });
+        res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations: userDonations });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -323,53 +329,63 @@ export const allDonationsByUser = async (req, res) => {
 
 export const allDonationsByAdmin = async (req, res) => {
     try {
-        const { id } = req.body;
-        let count = 100; // Number of donations to fetch per request
-        let skip = 0;
+        const {
+            templeName,
+            payId,
+            donateUser,
+            paymentMethod,
+            dateFrom,
+            dateTo,
+            user_id
+        } = req.body;
 
 
-        // Fetch donations in a loop to handle pagination
+        // Remove empty strings from the request body
+        Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
 
-        const options = {
-            count: count,
-            skip: skip,
-        };
+        // Set default values for pagination
+        const page = parseInt(req.body.page) || 1; // Default page number is 1
+        const limit = req.body.limit ? req.body.limit : 20; // Default limit is 20 temples per page
 
-        // Fetch donations
-        const fetchAllRazorpayAllDonations = await instance.payments.all(options);
+        let query = {};
 
-        const razorpayAllDonations = fetchAllRazorpayAllDonations.items;
+        if (templeName) query.templeName = { $regex: templeName, $options: 'i' };
 
-        const adminDonations = razorpayAllDonations.filter(
-            (donation) => {
-                if (donation.notes && donation.notes.temple) {
-                    try {
-                        const donations = Temple.findOne({ _id: donation.notes.temple, createdBy: id });
-                        return donations;
-                    } catch (error) {
-                        // Handle JSON parse error if donateUser is not a valid JSON string
-                        res.status(200).json({ success: true, message: 'No Donations found' });
-                    }
-                }
-                return false;
-            }
-        );
+        if (payId) query.razorpay_payment_id = payId;
 
 
-        const allDonations = await Donation.find({});
-        let customDonations = []
+        if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
 
-        adminDonations.map(donation => {
-            const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
-            if (customDonation) {
-                customDonations.push(customDonation)
-            }
+        if (paymentMethod) query.method = paymentMethod;
 
-        })
+        if (dateFrom) query.created_at = { $gte: new Date(dateFrom) };
 
-        res.status(200).json({ success: true, message: 'Donations retrieved successfully', razorpayDonations: adminDonations, donations: customDonations });
+        if (dateTo) {
+            if (!query.created_at) query.created_at = {};
+            query.created_at.$lte = new Date(dateTo);
+        }
+
+
+
+        const temples = await Temple.find({ 'createdBy': user_id });
+        console.log(temples)
+
+        query['temple'] = { $in: temples.map(t => t._id) };
+
+        // Fetch all donations from the database
+        const donations = await Donation.find(query)
+            .sort({ date: -1 })
+            .limit(limit)
+            .skip((page - 1) * limit);
+
+        // Fetch all donations from Razorpay
+
+        res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations });
+
+
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Error fetching payments:', error);
+        res.status(500).send({ success: false, message: 'Error fetching payments' });
     }
 };
 
@@ -526,7 +542,6 @@ export const donationInLast30Days = async (req, res) => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
 
-        console.log(`id is ${id}`)
         let donationInLast30DaysAmount = 0;
         const allDonation = await Donation.find({});
 
