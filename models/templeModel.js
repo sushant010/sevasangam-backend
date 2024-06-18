@@ -38,6 +38,16 @@ const templeSchema = new Schema({
         }
 
     },
+    aboutTemple1: {
+        type: String,
+        required: true,
+        default: 'The Temple is a renowned religious site dedicated to a significant deity. Located in a picturesque area, it is known for its spiritual ambiance and magnificent architecture. The temple attracts numerous devotees and tourists from around the world who come to seek blessings and experience its peaceful environment. The temple complex features intricately carved pillars, majestic domes, and beautifully adorned shrines, showcasing the rich cultural heritage of the region. The sanctum houses the main idol, which is revered by worshippers, and the temple premises include various halls and smaller shrines dedicated to other deities'
+    },
+    aboutTemple2: {
+        type: String,
+        required: true,
+        default: 'The history of the Temple dates back several centuries, with its origins rooted in ancient times. It was established by devout followers and has since been a significant center for religious activities. Over the centuries, the temple has undergone numerous renovations and expansions, each contributing to its grandeur and prominence. The temple has been a witness to historical events and has played a central role in the cultural and spiritual life of the community. Legends and folklore surrounding the temple speak of its divine origin and the miracles associated with the deity. Today, the temple stands as a testament to the enduring faith and devotion of its followers, continuing to be a beacon of spirituality and a symbol of the regions rich cultural legacy'
+    },
     createdOn: {
         type: Date,
         default: Date.now,
@@ -83,12 +93,12 @@ const templeSchema = new Schema({
         accountHolderName: { type: String, required: true },
         accountNumber: { type: String, required: true },
         ifscCode: { type: String, required: true },
-        routingNumber: { type: String, required: true },
-        swiftBicCode: { type: String, required: true }
+        routingNumber: { type: String, required: false },
+        swiftBicCode: { type: String, required: false }
     },
     taxInformation: {
-        taxId: { type: String, required: true },
-        ein: { type: String, required: true }
+        taxId: { type: String, required: false },
+        ein: { type: String, required: false }
     },
     website: {
         type: String,
@@ -117,12 +127,6 @@ const templeSchema = new Schema({
         instagram: { type: String, required: false },
         // Add other social media links as nefalse
     },
-    // upcomingEvents: [{
-    //     name: { type: String, required: false },
-    //     description: { type: String, required: false },
-    //     timing: { type: String, required: false },
-    //     images: { type: [String], required: false } // array of image paths or URLs
-    // }]  // array of objects
     pendingChanges: {
         type: Object,
         default: null,
@@ -130,12 +134,12 @@ const templeSchema = new Schema({
     timing: {
         start: {
             type: String,
-            required: true,
+            required: false,
             default: '08:00'
         },
         end: {
             type: String,
-            required: true,
+            required: false,
             default: '17:00'
         }
     },

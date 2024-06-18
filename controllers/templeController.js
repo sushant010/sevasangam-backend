@@ -24,22 +24,12 @@ export const createTemple = async (req, res) => {
 
     // console.log(parsedBody)
 
-    const { templeName, location, upcomingEvents } = parsedBody;
+    const { templeName, location, bankDetails, contactPerson } = parsedBody;
     const { address } = location;
 
-    console.log('upcomingEvents:', JSON.stringify(upcomingEvents, (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (value instanceof Date) {
-          return value.toISOString();
-        } else {
-          return JSON.stringify(value);
-        }
-      }
-      return value;
-    }, 2));
 
     if (!templeName || !address) {
-      return res.status(400).send({ success: false, message: 'Temple name and address are required' });
+      return res.status(200).send({ success: false, message: 'Temple name and address are required' });
     }
 
     const existingTemple = await Temple.findOne({
@@ -50,6 +40,23 @@ export const createTemple = async (req, res) => {
     if (existingTemple) {
       return res.status(200).send({ success: false, message: 'Temple already exists at this location!' });
     }
+
+
+    if (!location.address || !location.city || !location.state || !location.country || !location.zipCode) {
+      return res.status(200).send({ success: false, message: 'Temple Address is required' });
+    }
+
+    if (!bankDetails.bankName || !bankDetails.branch || !bankDetails.accountHolderName || !bankDetails.accountNumber || !bankDetails.ifscCode) {
+      return res.status(200).send({ success: false, message: 'Bank Details are required' });
+    }
+
+    if (!contactPerson.name || !contactPerson.email || !contactPerson.phone) {
+      return res.status(200).send({ success: false, message: 'Contact Person Details are required' });
+    }
+
+
+
+
 
     const images = {};
     if (files.logo) {
@@ -70,6 +77,7 @@ export const createTemple = async (req, res) => {
 
     if (!userWhoCreated) {
       return res.status(404).send({ success: false, message: 'User not found' });
+
     }
 
     userWhoCreated.totalTempleCreated += 1;
@@ -88,7 +96,8 @@ export const createTemple = async (req, res) => {
     await newTemple.save();
     res.status(201).send({ success: true, message: isVerified === 1 ? 'Temple created successfully' : "Temple submitted for review", data: newTemple });
   } catch (error) {
-    console.error(error);
+    console.log("ngengeongoengo")
+    console.log(error);
     res.status(500).send({
       success: false,
       message: 'An error occurred while creating the temple.',

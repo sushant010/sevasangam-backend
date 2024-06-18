@@ -307,18 +307,6 @@ export const allDonationsByUser = async (req, res) => {
             }
         );
 
-
-        // const allDonations = await Donation.find({});
-        // let customDonations = []
-
-        // userDonations.map(donation => {
-        //     const customDonation = allDonations.find(d => d.razorpay_payment_id === donation.id);
-        //     if (customDonation) {
-        //         customDonations.push(customDonation)
-        //     }
-
-        // })
-
         res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations: userDonations });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -396,30 +384,28 @@ export const request80Certificate = async (req, res) => {
 
         //fetch payment details
 
-        const donationDetails = await instance.payments.fetch(id);
+        const donationDetails = await Donation.findById(id);
+
 
         const amount = donationDetails.amount / 100;
-        const templeId = donationDetails.notes.temple;
+        const templeId = donationDetails.temple;
         const temple = await Temple.findById(templeId);
         const templeName = temple.templeName;
         const templeAdminDetails = await Temple.findById(templeId).populate('createdBy');
         const adminEmail = templeAdminDetails.createdBy.email;
         const adminName = templeAdminDetails.createdBy.name;
-        const donorDetails = JSON.parse(donationDetails.notes.donateUser)
+        const donorDetails = JSON.parse(donationDetails.donateUser)
 
-        await send80GformRequestToAdmin(adminEmail, donorDetails.email, adminName, amount, donationDetails.created_at, templeName, templeId, donationDetails.currency, donorDetails.name, donationDetails.id);
-        await send80GformRequestToSuperAdmin(process.env.WEBSITE_URL, donationDetails.id, donorDetails.name, templeId, templeName, donationDetails.id, amount, donationDetails.currency, donationDetails.created_at, temple.contactPerson.name, temple.contactPerson.email, temple.contactPerson.mobile, adminName);
+        await send80GformRequestToAdmin(adminEmail, donorDetails.email, adminName, amount, donationDetails.created_at, templeName, templeId, donationDetails.currency, donorDetails.name, donationDetails.razorpay_payment_id);
+        await send80GformRequestToSuperAdmin(process.env.WEBSITE_URL, donationDetails.razorpay_payment_id, donorDetails.name, templeId, templeName, donationDetails.id, amount, donationDetails.currency, donationDetails.created_at, temple.contactPerson.name, temple.contactPerson.email, temple.contactPerson.mobile, adminName);
 
         // res.status(200).json({ success: true, message: '80G certificate requested successfully' });
 
         // return;
 
         // Fetch all payments
-        const donation = await instance.payments.fetch(id);
-        const fetchDonation = await Donation.findOneAndUpdate({ razorpay_payment_id: id }, { is80CertificateRequested: true }, { new: true });
-        if (!fetchDonation) {
-            new Donation({ is80CertificateRequested: true, razorpay_order_id: donation.order_id, razorpay_payment_id: donation.id, razorpay_signature: donation.signature }).save()
-        }
+        const donation = await Donation.findByIdAndUpdate(id, { is80CertificateRequested: true }, { new: true });
+
         res.status(200).json({ success: true, message: '80G certificate requested successfully', donation });
     } catch (error) {
         console.log(error)

@@ -312,12 +312,10 @@ export const resetPasswordComplete = async (req, res) => {
                 },
             }
         );
-
-        alert("Password Reset Successfully!!")
         res.redirect(process.env.WEBSITE_URL);
     } catch (error) {
         console.log(error);
-        res.json({ status: "Something Went Wrong" });
+        res.redirect(process.env.WEBSITE_URL);
     }
 }
 
