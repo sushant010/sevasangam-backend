@@ -57,9 +57,9 @@ export const fetchEvent = async (req, res) => {
 export const UpdateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, date, timing } = req.body;
+        const { name, description, date, timing, images } = req.body;
 
-        const event = await eventModel.findByIdAndUpdate(id, { name, description, date, timing }, { new: true });
+        const event = await eventModel.findByIdAndUpdate(id, { name, description, date, timing, images }, { new: true });
 
         if (!event) {
             return res.status(404).json({ message: 'Event not found' });

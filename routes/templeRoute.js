@@ -31,18 +31,10 @@ import upload from '../config/multer.js';
 const router = express.Router();
 
 // Create a new temple
-router.post('/create-temple', upload.fields([
-  { name: 'logo', maxCount: 1 },
-  { name: 'bannerImage', maxCount: 1 },
-  { name: 'otherImages', maxCount: 5 },
-]), createTemple);
+router.post('/create-temple', createTemple);
 
 // Update a temple by ID
-router.put('/update-temple/:id', upload.fields([
-  { name: 'logo', maxCount: 1 },
-  { name: 'bannerImage', maxCount: 1 },
-  { name: 'otherImages', maxCount: 5 },
-]), updateTempleById);
+router.put('/update-temple/:id', updateTempleById);
 
 // Get all temples
 router.get('/get-temples', getAllTemples);

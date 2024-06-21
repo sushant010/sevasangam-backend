@@ -7,24 +7,9 @@ import cloudinary from '../config/cloudinary.js';
 
 export const createTemple = async (req, res) => {
   try {
-    const { body, files } = req;
-    const parsedBody = {};
+    const { body } = req;
 
-
-
-    Object.keys(body).forEach(key => {
-      if (key.includes('.')) {
-        const [parentKey, childKey] = key.split('.');
-        parsedBody[parentKey] = parsedBody[parentKey] || {};
-        parsedBody[parentKey][childKey] = body[key];
-      } else {
-        parsedBody[key] = body[key];
-      }
-    });
-
-    // console.log(parsedBody)
-
-    const { templeName, location, bankDetails, contactPerson } = parsedBody;
+    const { templeName, location, bankDetails, contactPerson } = body;
     const { address } = location;
 
 
@@ -50,26 +35,11 @@ export const createTemple = async (req, res) => {
       return res.status(200).send({ success: false, message: 'Bank Details are required' });
     }
 
-    if (!contactPerson.name || !contactPerson.email || !contactPerson.phone) {
+    if (!contactPerson.name || !contactPerson.email || !contactPerson.mobile) {
       return res.status(200).send({ success: false, message: 'Contact Person Details are required' });
     }
 
-
-
-
-
-    const images = {};
-    if (files.logo) {
-      images.logo = files.logo[0].path;
-    }
-    if (files.bannerImage) {
-      images.bannerImage = files.bannerImage[0].path;
-    }
-    if (files.otherImages) {
-      images.otherImages = files.otherImages.map(file => file.path);
-    }
-
-    const userWhoCreated = await userModel.findOne({ _id: parsedBody.createdBy });
+    const userWhoCreated = await userModel.findOne({ _id: body.createdBy });
     if (userWhoCreated.role === 0) {
       userWhoCreated.role = 1;
       await userWhoCreated.save();
@@ -87,16 +57,14 @@ export const createTemple = async (req, res) => {
 
 
     const newTemple = new Temple({
-      ...parsedBody,
-      images,
+      ...body,
       isVerified,
-      pendingChanges: isVerified === 1 ? null : { ...parsedBody, images }
+      pendingChanges: isVerified === 1 ? null : { ...body }
     });
 
     await newTemple.save();
     res.status(201).send({ success: true, message: isVerified === 1 ? 'Temple created successfully' : "Temple submitted for review", data: newTemple });
   } catch (error) {
-    console.log("ngengeongoengo")
     console.log(error);
     res.status(500).send({
       success: false,
@@ -108,123 +76,14 @@ export const createTemple = async (req, res) => {
 
 
 
-// export const updateTempleById = async (req, res) => {
-//   try {
-//     const { body, files } = req;
-//     const parsedBody = {};
-
-//     // console.log(body)
-
-//     // Parse the body to handle nested fields
-//     Object.keys(body).forEach(key => {
-//       if (key.includes('.')) {
-//         const [parentKey, childKey] = key.split('.');
-//         parsedBody[parentKey] = parsedBody[parentKey] || {};
-//         parsedBody[parentKey][childKey] = body[key];
-//       } else {
-//         parsedBody[key] = body[key];
-//       }
-//     });
-
-//     // Find the existing temple
-//     const existingTemple = await Temple.findById(req.params.id);
-
-//     if (!existingTemple) {
-//       return res.status(404).send({ success: false, message: 'Temple not found' });
-//     }
-
-//     // Compare updated fields with previous fields
-//     const updatedFields = {};
-//     console.log(parsedBody)
-
-//     Object.keys(parsedBody).forEach(key => {
-//       // Check if the field has changed
-//       const existingValue = existingTemple[key];
-//       const newValue = parsedBody[key];
-
-//       if (JSON.stringify(existingValue) !== JSON.stringify(newValue)) {
-//         updatedFields[key] = newValue;
-//       }
-//     });
-
-//     // Prepare updated data
-//     let updatedData = {
-//       ...existingTemple.toObject(),
-//       ...updatedFields,
-//     };
-
-//     // Handle image updates
-//     const updatedImages = {};
-//     if (files.logo) {
-//       updatedImages.logo = files.logo[0].path;
-//     }
-//     if (files.bannerImage) {
-//       updatedImages.bannerImage = files.bannerImage[0].path;
-//     }
-//     if (files.otherImages) {
-//       updatedImages.otherImages = files.otherImages.map(file => file.path);
-//     }
-
-//     updatedData.images = {
-//       ...existingTemple.images,
-//       ...updatedImages
-//     };
-
-//     // Check if createdBy is superadmin
-//     if (parsedBody.createdBy && parsedBody.createdBy.role === 2) {
-//       // Directly verify if created by superadmin
-//       updatedData.isVerified = 1;
-//       updatedData.isCreated = 0;
-//       updatedData.pendingChanges = null;
-//     } else {
-//       // Merge pending changes
-//       const mergedPendingChanges = {
-//         ...existingTemple.pendingChanges,
-//         ...updatedFields,
-//         images: {
-//           ...existingTemple.pendingChanges?.images,
-//           ...updatedImages
-//         }
-//       };
-
-//       updatedData = {
-//         ...updatedData,
-//         pendingChanges: mergedPendingChanges,
-//         hasChangesToApprove: 1,
-//         isCreated: 0
-//       };
-//     }
-
-//     // Update the temple
-//     const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, updatedData, { new: true, runValidators: true });
-
-//     res.status(200).send({ success: true, message: updatedData.isVerified === 1 ? 'Temple updated successfully' : 'Temple submitted for review', data: updatedTemple });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send({ success: false, message: 'An error occurred while updating the temple' });
-//   }
-// };
-
 export const updateTempleById = async (req, res) => {
   try {
-    const { body, files } = req;
-    const parsedBody = {};
-
-    // Parse the body to handle nested fields
-    Object.keys(body).forEach(key => {
-      if (key.includes('.')) {
-        const [parentKey, childKey] = key.split('.');
-        parsedBody[parentKey] = parsedBody[parentKey] || {};
-        parsedBody[parentKey][childKey] = body[key];
-      } else {
-        parsedBody[key] = body[key];
-      }
-    });
+    const { body } = req;
 
     // Find the existing temple
     const existingTemple = await Temple.findById(req.params.id);
 
-    const { userUpdating } = parsedBody;
+    const { userUpdating } = body;
 
     if (!existingTemple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
@@ -240,6 +99,7 @@ export const updateTempleById = async (req, res) => {
       'hasChangesToApprove',
       'pendingChanges',
       'createdOn',
+      'userUpdating',
       '__v'
     ];
 
@@ -255,7 +115,7 @@ export const updateTempleById = async (req, res) => {
           if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
             const nestedUpdates = getUpdatedFields(value, oldObj[key] || {}, fullKey);
             if (Object.keys(nestedUpdates).length > 0) {
-              updatedFields[key] = nestedUpdates;
+              updatedFields[key] = { ...oldObj[key], ...nestedUpdates };
             }
           } else {
             if (JSON.stringify(oldObj[key]) !== JSON.stringify(value)) {
@@ -268,42 +128,23 @@ export const updateTempleById = async (req, res) => {
       return updatedFields;
     };
 
+
     // Compare updated fields with previous fields
-    const updatedFields = getUpdatedFields(parsedBody, existingTemple);
+    const updatedFields = getUpdatedFields(body, existingTemple.toObject());
 
-    // Prepare updated data
-    let updatedData = {
-      ...existingTemple.toObject(),
-      ...updatedFields,
-    };
-
-    // Handle image updates
-    const updatedImages = {};
-    if (files.logo) {
-      updatedImages.logo = files.logo[0].path;
-    }
-    if (files.bannerImage) {
-      updatedImages.bannerImage = files.bannerImage[0].path;
-    }
-    if (files.otherImages) {
-      updatedImages.otherImages = files.otherImages.map(file => file.path);
-    }
-
-    updatedData.images = {
-      ...existingTemple.images,
-      ...updatedImages
-    };
 
     // Check if createdBy is superadmin
     if (userUpdating == 2) {
       // Directly verify if created by superadmin
-      updatedData.isVerified = 1;
-      updatedData.isCreated = 0;
-      updatedData.hasChangesToApprove = 0;
-      updatedData.pendingChanges = null;
+      updatedFields.isVerified = 1;
+      updatedFields.isCreated = 0;
+      updatedFields.hasChangesToApprove = 0;
+      updatedFields.pendingChanges = null;
+      updatedFields.images = body.images ? body.images : existingTemple.images;
+
 
       // Update the temple
-      const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, updatedData, { new: true, runValidators: true });
+      const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, updatedFields, { new: true, runValidators: true });
 
       res.status(200).send({ success: true, message: 'Temple updated successfully', data: updatedTemple });
     } else {
@@ -316,11 +157,8 @@ export const updateTempleById = async (req, res) => {
           }
           return acc;
         }, {}),
-        images: {
-          ...existingTemple.pendingChanges?.images,
-          ...updatedImages
-        }
       };
+
 
       // Update only pending changes
       const updatedTemple = await Temple.findByIdAndUpdate(req.params.id, { pendingChanges, hasChangesToApprove: 1, isCreated: 0 }, { new: true, runValidators: true });
@@ -799,17 +637,29 @@ export const rejectTemple = async (req, res) => {
   try {
     const { id } = req.body;
 
-    const temple = await Temple.findByIdAndUpdate(id, {
-      hasChangesToApprove: 0,
-      pendingChanges: null,
-      isVerified: 1
-    }, { new: true });
+
+
+    const temple = await Temple.findById(id).populate('createdBy');
 
     if (!temple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
     }
 
-    res.status(200).send({ success: true, message: 'Temple rejected successfully', data: temple });
+    if (temple.isCreated === 1) {
+      findByIdAndDelete(temple._id)
+      const user = await userModel.findById(temple.createdBy._id);
+      user.totalTempleCreated -= 1;
+      await user.save();
+      return res.status(200).send({ success: true, message: 'New Temple request rejected successfully' });
+    } else {
+      const temple = await Temple.findByIdAndUpdate(id, {
+        hasChangesToApprove: 0,
+        pendingChanges: null,
+        isVerified: 1
+      }, { new: true });
+    }
+
+    res.status(200).send({ success: true, message: 'Temple changes rejected successfully' });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Failed to reject temple', error });
   }

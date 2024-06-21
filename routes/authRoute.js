@@ -1,5 +1,5 @@
 import express from "express";
-import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete, sendOtpToRegisterNewUserController, totalDonationCollectedByAdmin } from '../controllers/authController.js'
+import { registerController, loginController, forgotPassword, allUsersController, deleteUserController, updateProfileController, googleLoginController, allTempleAdminsController, resetPasswordVerify, resetPasswordComplete, sendOtpToRegisterNewUserController, totalDonationCollectedByAdmin, updateProfilePictureController } from '../controllers/authController.js'
 import { isAdmin, isSignin, isSuperAdmin } from '../middlewares/authMiddleware.js'
 import upload from '../config/authMulter.js';
 
@@ -44,6 +44,10 @@ router.delete('/delete-user/:id', deleteUserController)
 router.put('/update/:id', upload.fields([
     { name: 'avatar', maxCount: 1 },
 ]), updateProfileController)
+
+
+router.put('/update-profile-picture/:id', updateProfilePictureController)
+
 
 // Google Auth
 

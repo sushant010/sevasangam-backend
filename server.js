@@ -15,12 +15,15 @@ import subscriptionEmailRoute from './routes/subscriptionEmailRoute.js'
 // import categoryRoute from './routes/categoryRoute.js'
 // import productRoute from './routes/productRoute.js'
 import { fileURLToPath } from 'url'
+import bodyParser from 'body-parser'
 
 // load all .env variables
 dotenv.config();
 
 // rest object
 const app = express();
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));

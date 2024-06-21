@@ -134,8 +134,7 @@ export const deleteUserController = async (req, res) => {
 
 export const updateProfileController = async (req, res) => {
     try {
-        const { name, password, phone } = req.body;
-        const { files } = req;
+        const { name, password, phone, avatar } = req.body;
         const userId = req.params.id;
 
         // Find the user by ID
@@ -146,14 +145,11 @@ export const updateProfileController = async (req, res) => {
             return res.status(404).send({ success: false, message: 'User not found.' });
         }
 
+
         // Hash the password if provided
         const hashedPassword = password ? await hashPassword(password) : undefined;
 
         // Update user's information
-        let avatar = '';
-        if (files && files.avatar) {
-            avatar = files.avatar[0].path;
-        }
 
         const updatedUser = await userModel.findByIdAndUpdate(
             userId,
@@ -378,3 +374,23 @@ export const totalDonationCollectedByAdmin = async (req, res) => {
 
 }
 
+export const updateProfilePictureController = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const currentUser = await userModel.findById(id);
+
+        const { newAvatarImage } = req.body;
+
+        currentUser.avatar = newAvatarImage;
+
+        console.log(req.body)
+        await currentUser.save();
+        res.send({ success: true, message: 'Profile picture updated successfully' });
+
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
