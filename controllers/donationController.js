@@ -237,7 +237,7 @@ export const allDonationsByAdmin = async (req, res) => {
 
 
         const temples = await Temple.find({ 'createdBy': user_id });
-        console.log(temples)
+        // console.log(temples)
 
         query['temple'] = { $in: temples.map(t => t._id) };
 
@@ -298,20 +298,15 @@ export const request80Certificate = async (req, res) => {
 
 export const upload80Certificate = async (req, res) => {
     try {
-        const { id } = req.body;
-
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No file uploaded' });
-        }
-
-        const certificatePath = req.file.path;
+        const { id, certificate } = req.body;
 
         // Find the donation by ID and update it with the certificate path
-        const donation = await Donation.findOneAndUpdate(
-            { razorpay_payment_id: id },
-            { certificate: certificatePath },
+        const donation = await Donation.findByIdAndUpdate(
+            { _id: id },
+            { certificate: certificate },
             { new: true }
         );
+
 
         if (!donation) {
             return res.status(404).json({ success: false, message: 'Donation not found' });
@@ -327,19 +322,14 @@ export const upload80Certificate = async (req, res) => {
 
 export const update80Certificate = async (req, res) => {
     try {
-        const { id } = req.body;
+        const { id, certificate } = req.body;
 
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No file uploaded' });
-        }
-
-        const certificatePath = req.file.path;
 
         // Find the donation by ID and update it with the new certificate path
         const donation = await Donation.findOneAndUpdate(
-            { razorpay_payment_id: id },
+            { _id: id },
             { is80CertificateRequested: false },
-            { certificate: certificatePath },
+            { certificate: certificate },
             { new: true }
         );
 
