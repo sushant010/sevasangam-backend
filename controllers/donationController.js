@@ -96,126 +96,7 @@ export const paymentVerification = async (req, res) => {
 }
 
 
-// export const fetchAllDonations = async (req, res) => {
-//     try {
-//         const {
-//             count = 10,
-//             skip = 0,
-//             temple,
-//             payId,
-//             templeCreatedBy,
-//             donateUser,
-//             paymentMethod,
-//             dateFrom,
-//             dateTo
-//         } = req.body;
 
-//         // Base options for fetching donations
-//         const options = {
-//             count,
-//             skip,
-//         };
-
-//         // Fetch all payments from Razorpay
-//         const fetchAllDonations = await Donation.find({});
-
-//         let templeCreatorMap = {};
-
-//         if (temple) {
-//             const QueryTemple = await Temple.find({ templeName: temple });
-//             console.log("efefefefefefe")
-//             console.log(QueryTemple)
-
-//         }
-
-
-
-
-//         const filteredTemples = await Temple.aggregate([
-//             {
-//                 $lookup: {
-//                     from: "users",
-//                     localField: "createdBy",
-//                     foreignField: "_id",
-//                     as: "user"
-//                 }
-//             },
-//             {
-//                 $match: {
-//                     "user.name": {
-//                         $regex: templeCreatedBy ? templeCreatedBy : '',
-//                         $options: 'i'
-
-//                     },
-//                     "templeName": {
-//                         $regex: temple ? temple : '',
-//                         $options: 'i'
-//                     }
-
-//                 }
-//             }
-//         ])
-
-
-
-//         const filteredDonations = fetchAllDonations.filter(donation => {
-//             let isValid = true;
-
-//             const filterTempleIds = filteredTemples.map((val) => val._id.toString())
-
-
-//             // if (temple && QueryTemple && !filterTempleIds.includes(QueryTemple._id)) {
-//             //     console.log(`query temple id is ${QueryTemple._id}`)
-//             //     isValid = false;
-//             // }
-
-
-//             if (payId && donation.razorpay_payment_id !== payId) {
-//                 isValid = false;
-//             }
-
-
-//             const donateUserParsed = donation.donateUser;
-//             if (donateUser && donateUserParsed) {
-//                 try {
-//                     if (donateUserParsed.name !== donateUser && donateUserParsed.email !== donateUser && donateUserParsed.phone !== donateUser) {
-//                         isValid = false;
-//                     }
-//                 } catch (error) {
-//                     isValid = false;
-//                 }
-//             }
-
-//             if (paymentMethod && donation.method !== paymentMethod) {
-//                 isValid = false;
-//             }
-
-
-//             if (dateFrom) {
-//                 const donationDate = new Date(donation.created_at * 1000);
-//                 const fromDate = new Date(dateFrom);
-//                 if (donationDate < fromDate) {
-//                     isValid = false;
-//                 }
-//             }
-
-//             if (dateTo) {
-//                 const donationDate = new Date(donation.created_at * 1000);
-//                 const toDate = new Date(dateTo);
-//                 if (donationDate > toDate) {
-//                     isValid = false;
-//                 }
-//             }
-
-//             return isValid;
-//         });
-
-//         res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations: filteredDonations });
-//     } catch (error) {
-//         console.error('Error fetching payments:', error);
-//         res.status(500).send({ success: false, message: 'Error fetching payments' });
-//     }
-// };
 
 export const fetchAllDonations = async (req, res) => {
     try {
@@ -520,39 +401,6 @@ export const subscription = async (req, res) => {
 
 }
 
-
-// export const donationInLast30Days = async (req, res) => {
-//     try {
-//         const { id } = req.body;
-//         const thirtyDaysAgo = new Date();
-//         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-
-//         let donationInLast30DaysAmount = 0;
-//         const allDonation = await Donation.find({});
-
-//         const donations = allDonation && allDonation.filter(donation => donation.temple && donation.temple._id == id);
-
-//         donations.forEach(donation => {
-
-//             if (donation.date > thirtyDaysAgo.getTime()) {
-//                 donationInLast30DaysAmount += donation.amount;
-
-//             }
-//         });
-
-//         res.status(200).json({
-//             success: true,
-//             message: 'Donations retrieved successfully',
-//             donationInLast30DaysAmount,
-//         });
-
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ success: false, message: 'Failed to fetch amount' });
-//     }
-// };
-
 export const donationInLast30Days = async (req, res) => {
     try {
 
@@ -562,27 +410,32 @@ export const donationInLast30Days = async (req, res) => {
         let templeAndDonationAmount = {}
 
         allTemples.forEach(async temple => {
-            console.log(temple._id)
+
+
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
             let donationInLast30DaysAmount = 0;
-            const allDonation = await Donation.find({});
+            const allDonation = await Donation.find({}).populate('temple');
 
-            const donations = allDonation && allDonation.filter(donation => donation.temple && donation.temple._id == temple._id);
+
+            const donations = allDonation && allDonation.filter(donation => donation.temple?._id.toString() === temple._id.toString());
+            // console.log(allDonation)
+            // console.log(`${donation.temple._id} -- ${temple._id}`)
+
 
             donations.forEach(donation => {
-
-                if (donation.date > thirtyDaysAgo.getTime()) {
+                if (donation?.date == undefined) {
+                    return;
+                }
+                if (donation?.date > thirtyDaysAgo.getTime()) {
                     donationInLast30DaysAmount += donation.amount;
-
                 }
             });
 
             temple.donationInLast30Days = donationInLast30DaysAmount;
-            templeAndDonationAmount[temple._id] = donationInLast30DaysAmount || 0;
             await temple.save();
-            console.log(templeAndDonationAmount)
+
         });
 
         res.status(200).json({
@@ -590,10 +443,6 @@ export const donationInLast30Days = async (req, res) => {
             message: 'Donations retrieved successfully',
             data: templeAndDonationAmount,
         });
-
-
-
-
     } catch (error) {
         console.log(error);
         res.status(500).json({ success: false, message: 'Failed to fetch amount' });

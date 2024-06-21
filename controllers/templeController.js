@@ -525,13 +525,15 @@ export const getFilteredTemples = async (req, res) => {
     // Additional sorting options based on provided sortOption
     if (sortOption) {
       if (sortOption === 'mostPopular') {
-        sort.donation = -1; // Sort by donation in descending order (most popular)
+        sort.donationInLast30Days = -1; // Sort by donation in descending order (most popular)
       } else if (sortOption === 'recentlyAdded') {
         sort.createdOn = -1; // Sort by creation date in descending order (recently added)
       } else if (sortOption === 'trending') {
         query.isTrending = 1; // Filter by trending status
         sort.isTrending = -1; // Sort by trending status in descending order
       }
+    } else {
+      sort.donationInLast30Days = -1;
     }
 
     // Query the database for temples matching the filters and sort options
