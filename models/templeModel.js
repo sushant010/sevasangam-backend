@@ -143,6 +143,11 @@ const templeSchema = new Schema({
             default: '17:00'
         }
     },
+    donationInLast30Days: {
+        type: Number,
+        default: 0
+    },
+
 });
 
 

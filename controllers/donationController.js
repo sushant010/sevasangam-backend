@@ -521,36 +521,82 @@ export const subscription = async (req, res) => {
 }
 
 
+// export const donationInLast30Days = async (req, res) => {
+//     try {
+//         const { id } = req.body;
+//         const thirtyDaysAgo = new Date();
+//         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+
+//         let donationInLast30DaysAmount = 0;
+//         const allDonation = await Donation.find({});
+
+//         const donations = allDonation && allDonation.filter(donation => donation.temple && donation.temple._id == id);
+
+//         donations.forEach(donation => {
+
+//             if (donation.date > thirtyDaysAgo.getTime()) {
+//                 donationInLast30DaysAmount += donation.amount;
+
+//             }
+//         });
+
+//         res.status(200).json({
+//             success: true,
+//             message: 'Donations retrieved successfully',
+//             donationInLast30DaysAmount,
+//         });
+
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ success: false, message: 'Failed to fetch amount' });
+//     }
+// };
+
 export const donationInLast30Days = async (req, res) => {
     try {
-        const { id } = req.body;
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
 
-        let donationInLast30DaysAmount = 0;
-        const allDonation = await Donation.find({});
+        const allTemples = await Temple.find({});
 
-        const donations = allDonation && allDonation.filter(donation => donation.temple && donation.temple._id == id);
+        let templeAndDonationAmount = {}
 
-        donations.forEach(donation => {
+        allTemples.forEach(async temple => {
+            console.log(temple._id)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            if (donation.date > thirtyDaysAgo.getTime()) {
-                donationInLast30DaysAmount += donation.amount;
+            let donationInLast30DaysAmount = 0;
+            const allDonation = await Donation.find({});
 
-            }
+            const donations = allDonation && allDonation.filter(donation => donation.temple && donation.temple._id == temple._id);
+
+            donations.forEach(donation => {
+
+                if (donation.date > thirtyDaysAgo.getTime()) {
+                    donationInLast30DaysAmount += donation.amount;
+
+                }
+            });
+
+            temple.donationInLast30Days = donationInLast30DaysAmount;
+            templeAndDonationAmount[temple._id] = donationInLast30DaysAmount || 0;
+            await temple.save();
+            console.log(templeAndDonationAmount)
         });
 
         res.status(200).json({
             success: true,
             message: 'Donations retrieved successfully',
-            donationInLast30DaysAmount,
+            data: templeAndDonationAmount,
         });
+
+
+
 
     } catch (error) {
         console.log(error);
         res.status(500).json({ success: false, message: 'Failed to fetch amount' });
     }
 };
-
 

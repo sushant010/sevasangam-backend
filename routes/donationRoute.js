@@ -34,7 +34,7 @@ router.post('/upload-80-certificate', pdfUpload.single('certificate'), upload80C
 
 router.put('/update-80-certificate', pdfUpload.single('certificate'), update80Certificate);
 
-router.post('/fetch-donation-last-30-days', donationInLast30Days);
+router.get('/fetch-donation-last-30-days', donationInLast30Days);
 
 
 export default router;
