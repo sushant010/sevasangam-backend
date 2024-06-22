@@ -131,7 +131,7 @@ export const fetchAllDonations = async (req, res) => {
             query.created_at.$lte = new Date(dateTo);
         }
 
-        const existingTemples = await Temple.find({}).select('_id');
+        const existingTemples = await Temple.find({}).select('_id').select('-images').select('-pendingChanges');
         const existingTempleIds = existingTemples.map(temple => temple._id);
 
         // Fetch all donations from the database
@@ -167,7 +167,14 @@ export const allDonationsByUser = async (req, res) => {
 
         // Fetch donations
 
-        const allDonations = await Donation.find({}).sort({ date: -1 });
+        const existingTemples = await Temple.find({}).select('_id').select('-images').select('-pendingChanges');
+        const existingTempleIds = existingTemples.map(temple => temple._id);
+
+
+        const allDonations = await Donation.find({ temple: { $in: existingTempleIds } }).sort({ date: -1 }).populate('temple');
+
+
+
 
         const userDonations = allDonations.filter(
             (donation) => {
