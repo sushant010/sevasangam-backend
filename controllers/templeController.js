@@ -339,7 +339,8 @@ export const getAllVerifiedTemples = async (req, res) => {
 // Get a single temple by ID
 export const getTempleById = async (req, res) => {
   try {
-    const temple = await Temple.findById(req.params.id).populate('createdBy');
+    const temple = await Temple.findById(req.params.id).populate('createdBy').select('-pendingChanges')
+      ;
     if (!temple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
     }
@@ -423,7 +424,7 @@ export const getAllTemplesByAdmin = async (req, res) => {
 export const getUnverifiedNewlyCreatedTemples = async (req, res) => {
 
   try {
-    const temples = await Temple.find({ isVerified: 0, isCreated: 1 }).populate('createdBy');
+    const temples = await Temple.find({ isVerified: 0, isCreated: 1 }).populate('createdBy').select('-images').select('-pendingChanges');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -435,7 +436,7 @@ export const getUnverifiedNewlyCreatedTemples = async (req, res) => {
 export const getUnverifiedUpdatedByAdminTemples = async (req, res) => {
 
   try {
-    const temples = await Temple.find({ hasChangesToApprove: 1 }).populate('createdBy');
+    const temples = await Temple.find({ hasChangesToApprove: 1 }).populate('createdBy').select('-images').select('-pendingChanges');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
@@ -448,7 +449,7 @@ export const getUnverifiedUpdatedByAdminTemples = async (req, res) => {
 export const verifyTemple = async (req, res) => {
   try {
     const { id } = req.params;
-    const temple = await Temple.findById(id);
+    const temple = await Temple.findById(id).select('_id');
     if (temple.pendingChanges) {
       // Apply pending changes
       Object.assign(temple, temple.pendingChanges, { pendingChanges: null });
@@ -541,7 +542,9 @@ export const getFilteredTemples = async (req, res) => {
       isVerified: 1,
       ...query
     })
-      .populate('createdBy') // Populate the createdBy field
+      .populate('createdBy')
+      .select('-pendingChanges')
+      .select('-images')
       .sort(sort) // Apply sorting
       .skip((page - 1) * limit) // Skip the documents for pagination
       .limit(limit); // Limit the number of documents returned per page
@@ -658,7 +661,8 @@ export const rejectTemple = async (req, res) => {
         hasChangesToApprove: 0,
         pendingChanges: null,
         isVerified: 1
-      }, { new: true });
+      }, { new: true }).select('-pendingChanges')
+        .select('-images');
     }
 
     res.status(200).send({ success: true, message: 'Temple changes rejected successfully' });
@@ -697,7 +701,8 @@ export const getSearchSuggestionTempleName = async (req, res) => {
   try {
     const temples = await Temple.find({
       templeName: { $regex: search, $options: 'i' }
-    }).limit(10); // Limit to 10 suggestions
+    }).limit(10).select('-pendingChanges')
+      .select('-images'); // Limit to 10 suggestions
     res.send({ success: true, data: temples });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Error fetching suggestions', error });
@@ -718,7 +723,7 @@ export const getSimilarTemples = async (req, res) => {
 
     const typeOfOrganization = refTemple.typeOfOrganization;
 
-    const temples = await Temple.find({ typeOfOrganization }).populate('createdBy').limit(limit);
+    const temples = await Temple.find({ typeOfOrganization }).populate('createdBy').limit(limit).select('-pendingChanges').select('-images');
     // Limit the number of documents returned per page
 
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
