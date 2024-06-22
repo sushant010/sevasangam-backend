@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import send80GformRequestToAdmin from '../email/functions/80G-form/send80GformRequestToAdmin.js';
 import send80GformRequestToSuperAdmin from "./../email/functions/80G-form/send80GfromRequestToSuperAdmin.js"
 import Subscription from '../models/subscriptionModel.js';
+import sendDonationAcknowledgementToDonateUser from '../email/functions/sendDonationAcknowledgementToDonateUser.js';
 dotenv.config();
 var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
 
@@ -83,8 +84,10 @@ export const paymentVerification = async (req, res) => {
         const temple = await Temple.findById(razorPayDonation.notes.temple);
         temple.donation += razorPayDonation.amount / 100;
         await temple.save();
+        const name = JSON.parse(razorPayDonation.notes.donateUser).name;
+        const userEmail = JSON.parse(razorPayDonation.notes.donateUser).email;
 
-
+        sendDonationAcknowledgementToDonateUser(userEmail, name, razorpay_payment_id, temple.templeName, razorPayDonation.amount / 100, razorPayDonation.currency, razorPayDonation.method, razorPayDonation.created_at);
 
         res.redirect(`${process.env.WEBSITE_URL}/temples`);
 
@@ -270,8 +273,8 @@ export const request80Certificate = async (req, res) => {
         const adminName = templeAdminDetails.createdBy.name;
         const donorDetails = JSON.parse(donationDetails.donateUser)
 
-        await send80GformRequestToAdmin(adminEmail, donorDetails.email, adminName, amount, donationDetails.created_at, templeName, templeId, donationDetails.currency, donorDetails.name, donationDetails.razorpay_payment_id);
-        await send80GformRequestToSuperAdmin(process.env.WEBSITE_URL, donationDetails.razorpay_payment_id, donorDetails.name, templeId, templeName, donationDetails.id, amount, donationDetails.currency, donationDetails.created_at, temple.contactPerson.name, temple.contactPerson.email, temple.contactPerson.mobile, adminName);
+        await send80GformRequestToAdmin(adminEmail, donorDetails.email, adminName, amount * 100, donationDetails.created_at, templeName, templeId, donationDetails.currency, donorDetails.name, donationDetails.razorpay_payment_id);
+        await send80GformRequestToSuperAdmin(process.env.WEBSITE_URL, donationDetails.razorpay_payment_id, donorDetails.name, templeId, templeName, donationDetails.id, amount * 100, donationDetails.currency, donationDetails.created_at, temple.contactPerson.name, temple.contactPerson.email, temple.contactPerson.mobile, adminName);
 
         // res.status(200).json({ success: true, message: '80G certificate requested successfully' });
 

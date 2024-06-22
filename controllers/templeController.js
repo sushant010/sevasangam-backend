@@ -174,92 +174,56 @@ export const updateTempleById = async (req, res) => {
 
 
 
-
-// Get all temples
 export const getAllTemples = async (req, res) => {
   try {
-
     const { templeName, location, isTrending, verified, templeCreatedBy } = req.query;
 
+    let query = {};
 
-    let dbQuery = {
-      $or: []
-    }
-
-    if (location && location !== null && location.trim() !== "") {
-      // { 'location.address': { $regex: address, $options: 'i' } },
-      dbQuery.$or.push(
+    if (location && location.trim() !== "") {
+      query.$or = [
         { 'location.address': { $regex: location, $options: 'i' } },
-      )
-      dbQuery.$or.push(
         { 'location.country': { $regex: location, $options: 'i' } },
-      )
-      dbQuery.$or.push(
         { 'location.state': { $regex: location, $options: 'i' } },
-      )
-      dbQuery.$or.push(
-        { 'location.city': { $regex: location, $options: 'i' } },
-      )
+        { 'location.city': { $regex: location, $options: 'i' } }
+      ];
     }
 
-
-
-    if (templeName && templeName !== null && templeName.trim() !== "") {
-      dbQuery.templeName = { $regex: templeName, $options: 'i' };
+    if (templeName && templeName.trim() !== "") {
+      query.templeName = { $regex: templeName, $options: 'i' };
     }
 
     if (isTrending && isTrending !== "false") {
-      // console.log(isTrending)
-      dbQuery.isTrending = 1
+      query.isTrending = true;
     }
 
-    if (verified && verified !== null && verified.trim() !== "") {
-      dbQuery.isVerified = verified === '1' ? 1 : { $ne: 1 };
+    if (verified && verified.trim() !== "") {
+      query.isVerified = verified === '1';
     }
 
-    //match templeCreated by
-
-    if (templeCreatedBy && templeCreatedBy !== null && templeCreatedBy.trim() !== "") {
-      dbQuery['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
+    if (templeCreatedBy && templeCreatedBy.trim() !== "") {
+      query['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
     }
 
+    const temples = await Temple.find(query)
+      .populate('createdBy', 'name') // Populate createdBy field with selected fields
+      .select('-pendingChanges') // Exclude pendingChanges field
+      .populate({
+        path: 'images',
+        select: 'bannerImage' // Select only necessary fields
+      })
+      .select('-images') // Exclude pending changes and images
+      .sort({ createdOn: -1 }) // Sort by creation date in descending order
+      .limit(20); // Limit the number of documents returned per page
 
-
-    if (dbQuery.$or.length === 0) {
-      delete dbQuery.$or
-    }
-    const temples = await Temple.aggregate([
-      {
-        $lookup: {
-
-          from: 'users',
-          localField: 'createdBy',
-          foreignField: '_id',
-          as: 'createdBy'
-
-
-        },
-      },
-      {
-        $unwind: '$createdBy'
-      },
-
-      {
-        $match: {
-          ...dbQuery,
-          ...(templeCreatedBy && templeCreatedBy !== '' && { 'createdBy.name': { $regex: templeCreatedBy, $options: 'i' } })
-        }
-      }
-    ])
-
-    // .populate('createdBy');
     const count = temples.length;
     res.status(200).send({ success: true, message: 'Temples retrieved successfully', data: { count, temples } });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }
 };
+
 
 export const searchTempleByName = async (req, res) => {
 
@@ -370,7 +334,8 @@ export const getTempleByName = async (req, res) => {
 // Delete a temple by ID
 export const deleteTempleById = async (req, res) => {
   try {
-    const temple = await Temple.findByIdAndDelete(req.params.id);
+    const temple = await Temple.findByIdAndDelete(req.params.id).select('-pendingChanges')
+      .select('-images') // Exclude pending changes and images
     const userWhoCreated = await userModel.findOne({ _id: temple.createdBy });
     userWhoCreated.totalTempleCreated -= 1;
     await userWhoCreated.save();
@@ -544,7 +509,11 @@ export const getFilteredTemples = async (req, res) => {
     })
       .populate('createdBy')
       .select('-pendingChanges')
-      .select('-images')
+      .populate({
+        path: 'images',
+        select: 'bannerImage' // Select only necessary fields
+      })
+      .select('-images') // Exclude pending changes and images
       .sort(sort) // Apply sorting
       .skip((page - 1) * limit) // Skip the documents for pagination
       .limit(limit); // Limit the number of documents returned per page
@@ -644,7 +613,7 @@ export const rejectTemple = async (req, res) => {
 
 
 
-    const temple = await Temple.findById(id).populate('createdBy');
+    const temple = await Temple.findById(id).populate('createdBy').select('-images');
 
     if (!temple) {
       return res.status(404).send({ success: false, message: 'Temple not found' });
@@ -662,7 +631,7 @@ export const rejectTemple = async (req, res) => {
         pendingChanges: null,
         isVerified: 1
       }, { new: true }).select('-pendingChanges')
-        .select('-images');
+        .select('-images') // Exclude pending changes and images
     }
 
     res.status(200).send({ success: true, message: 'Temple changes rejected successfully' });
@@ -702,7 +671,7 @@ export const getSearchSuggestionTempleName = async (req, res) => {
     const temples = await Temple.find({
       templeName: { $regex: search, $options: 'i' }
     }).limit(10).select('-pendingChanges')
-      .select('-images'); // Limit to 10 suggestions
+      .select('-images') // Exclude pending changes and images
     res.send({ success: true, data: temples });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Error fetching suggestions', error });
@@ -723,8 +692,11 @@ export const getSimilarTemples = async (req, res) => {
 
     const typeOfOrganization = refTemple.typeOfOrganization;
 
-    const temples = await Temple.find({ typeOfOrganization }).populate('createdBy').limit(limit).select('-pendingChanges').select('-images');
-    // Limit the number of documents returned per page
+    const temples = await Temple.find({ typeOfOrganization }).populate('createdBy').limit(limit).select('-pendingChanges').populate({
+      path: 'images',
+      select: 'bannerImage' // Select only necessary fields
+    })
+      .select('-images') // Exclude pending changes and images
 
     res.status(200).send({ success: true, message: 'Filtered temples retrieved successfully', data: { temples } });
   } catch (error) {
@@ -769,6 +741,18 @@ export const removeTrendingTemple = async (req, res) => {
     await Temple.findByIdAndUpdate(id, { isTrending: 0 });
 
     res.status(200).send({ success: true, message: 'Trending temples updated successfully' });
+  } catch (error) {
+    res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
+  }
+};
+
+// not being used
+export const getAllImages = async (req, res) => {
+  try {
+
+    const templesImages = await Temple.find({ isVerified: 1 }).select('images');
+
+    res.status(200).send({ success: true, message: 'Trending temples updated successfully', templesImages });
   } catch (error) {
     res.status(500).send({ success: false, message: 'Failed to retrieve temples', error });
   }

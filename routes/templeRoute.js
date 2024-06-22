@@ -23,6 +23,7 @@ import {
   getTempleCreators,
   getAllStatesOfTemples,
   getAllCitiesOfTemples,
+  getAllImages,
 } from '../controllers/templeController.js';
 import { isAdmin, isSignin } from '../middlewares/authMiddleware.js';
 import upload from '../config/multer.js';
@@ -81,5 +82,6 @@ router.get('/get-states-of-temples', getAllStatesOfTemples)
 
 router.get('/get-cities-of-temples', getAllCitiesOfTemples)
 
+router.get('/get-images-of-temples', getAllImages)
 
 export default router;

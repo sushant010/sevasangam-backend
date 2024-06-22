@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donation Successfull</title>
+    <style>
+        .container {
+            width: 100%;
+            color: #424242;
+        }
+
+        .container>.wrapper {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            background-color: #e1e6e1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .container>.wrapper>header {
+            background-color: #ff395c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .dearLine {
+            font-weight: 700;
+        }
+
+        .container>.wrapper>.mainSection {
+            padding: 10px 20px;
+        }
+
+        .container>.wrapper>.mainSection>table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            width: fit-content;
+            border: 2px solid #ff395c;
+            margin: auto;
+        }
+
+        .container>.wrapper>.mainSection>table th,
+        .container>.wrapper>.mainSection>table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #ff395c;
+            border-right: 2px solid #ff395c;
+            font-weight: 700;
+        }
+
+        .container>.wrapper>.mainSection>table td a {
+            color: #424242;
+
+        }
+
+        .container>.wrapper>.mainSection>table td {
+            color: #424242;
+        }
+
+        .container>.wrapper>.mainSection>.buttonContainer {
+            margin: auto;
+            margin-top: 40px;
+        }
+
+        .container>.wrapper>.mainSection>.buttonContainer>.uploadButton {
+            padding: 10px 20px;
+            text-align: center;
+            background-color: #ff395c;
+            margin: auto;
+            text-decoration: none;
+            color: white;
+            display: block;
+            width: fit-content;
+        }
+
+        .description {
+            color: #565656;
+            text-align: center;
+        }
+
+        footer {
+            background-color: #ff395c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <p>
+    </p>
+    <div class="container">
+        <div class="wrapper">
+            <header>Thank You for Your Generous Donation!</header>
+            <div class="mainSection">
+                <p class="dearLine">Dear <%= name %>,</p>
+                <p>
+                    We are immensely grateful for your kind donation of <strong>
+                        <%= donationAmount %>
+                            <%= donationCurrency %>
+                    </strong> to <strong>
+                        <%= templeName %>
+                    </strong>. Your
+                    generosity plays a vital
+                    role in supporting the spiritual and cultural heritage that <strong>
+                        <%= templeName %>
+                    </strong> embodies. :
+                </p>
+                <table>
+                    <tr>
+                        <th>Payment Id</th>
+                        <td>
+                            <%= razorpay_payment_id %>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Donation amount</th>
+                        <td>
+                            <%= donationAmount %>
+                                <%= donationCurrency %>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Donation method</th>
+                        <td>
+
+                            <%= donationMethod %>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Donation date</th>
+                        <td>
+                            <%= donationDate %>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Donated to</th>
+                        <td>
+                            <%= templeName %>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <footer>This email is from SevaSangam</footer>
+        </div>
+    </div>
+</body>
+
+</html>
