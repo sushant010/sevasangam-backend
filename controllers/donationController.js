@@ -107,53 +107,46 @@ export const fetchAllDonations = async (req, res) => {
             donateUser,
             paymentMethod,
             dateFrom,
-            dateTo
+            dateTo,
+            page = 1,
+            limit = 20
         } = req.body;
-
 
         // Remove empty strings from the request body
         Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
 
-        // Set default values for pagination
-        const page = parseInt(req.body.page) || 1; // Default page number is 1
-        const limit = req.body.limit ? req.body.limit : 20; // Default limit is 20 temples per page
-
         let query = {};
 
-
         if (templeName) query.templeName = { $regex: templeName, $options: 'i' };
-
         if (payId) query.razorpay_payment_id = payId;
-
         if (templeCreatedBy) query['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
-
         if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
-
         if (paymentMethod) query.method = paymentMethod;
-
         if (dateFrom) query.created_at = { $gte: new Date(dateFrom) };
-
         if (dateTo) {
             if (!query.created_at) query.created_at = {};
             query.created_at.$lte = new Date(dateTo);
         }
 
+        const existingTemples = await Temple.find({}).select('_id');
+        const existingTempleIds = existingTemples.map(temple => temple._id);
+
         // Fetch all donations from the database
-        const donations = await Donation.find(query)
+        const donations = await Donation.find({ ...query, temple: { $in: existingTempleIds } })
             .sort({ date: -1 })
             .limit(limit)
-            .skip((page - 1) * limit);
-
-        // Fetch all donations from Razorpay
+            .skip((page - 1) * limit)
+            .populate('temple')
+            .exec();
 
         res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations });
-
 
     } catch (error) {
         console.error('Error fetching payments:', error);
         res.status(500).send({ success: false, message: 'Error fetching payments' });
     }
 };
+
 
 export const allDonationsByUser = async (req, res) => {
     try {
