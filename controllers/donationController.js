@@ -64,6 +64,7 @@ export const paymentVerification = async (req, res) => {
 
         // Fetch all payments from Razorpay
         const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
+        console.log(razorPayDonation)
 
         const donation = new Donation(
             {
@@ -76,6 +77,7 @@ export const paymentVerification = async (req, res) => {
                 temple: razorPayDonation.notes.temple,
                 method: razorPayDonation.method,
                 currency: razorPayDonation.currency,
+                isAnonymous: razorPayDonation?.notes?.anonymous == 'false' ? false : true,
             }
         );
 
@@ -92,9 +94,7 @@ export const paymentVerification = async (req, res) => {
         res.redirect(`${process.env.WEBSITE_URL}/temples`);
 
     } else {
-        res.status(400).json({
-            success: false,
-        });
+        res.status(500).send({ success: false, message: 'Error in payment verification!' });
     }
 }
 
@@ -109,6 +109,7 @@ export const fetchAllDonations = async (req, res) => {
             templeCreatedBy,
             donateUser,
             paymentMethod,
+            isAnonymous,
             dateFrom,
             dateTo,
             page = 1,
@@ -125,6 +126,7 @@ export const fetchAllDonations = async (req, res) => {
         if (templeCreatedBy) query['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
         if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
         if (paymentMethod) query.method = paymentMethod;
+        if (isAnonymous) query.isAnonymous = isAnonymous;
         if (dateFrom) query.created_at = { $gte: new Date(dateFrom) };
         if (dateTo) {
             if (!query.created_at) query.created_at = {};
@@ -169,12 +171,7 @@ export const allDonationsByUser = async (req, res) => {
 
         const existingTemples = await Temple.find({}).select('_id').select('-images').select('-pendingChanges');
         const existingTempleIds = existingTemples.map(temple => temple._id);
-
-
         const allDonations = await Donation.find({ temple: { $in: existingTempleIds } }).sort({ date: -1 }).populate('temple');
-
-
-
 
         const userDonations = allDonations.filter(
             (donation) => {
@@ -267,9 +264,7 @@ export const request80Certificate = async (req, res) => {
         const { id } = req.body;
 
         //fetch payment details
-
         const donationDetails = await Donation.findById(id);
-
 
         const amount = donationDetails.amount / 100;
         const templeId = donationDetails.temple;
@@ -303,10 +298,12 @@ export const upload80Certificate = async (req, res) => {
     try {
         const { id, certificate } = req.body;
 
+
         // Find the donation by ID and update it with the certificate path
         const donation = await Donation.findByIdAndUpdate(
             { _id: id },
             { certificate: certificate },
+            { is80CertificateRequested: false },
             { new: true }
         );
 

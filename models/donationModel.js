@@ -58,6 +58,11 @@ const donationSchema = new Schema({
         type: String,
         required: false,
     },
+    isAnonymous: {
+        type: Boolean,
+        default: false,
+        required: false,
+    },
 });
 
 // Export the Donation model
