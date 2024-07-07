@@ -308,10 +308,10 @@ export const resetPasswordComplete = async (req, res) => {
                 },
             }
         );
-        res.redirect(process.env.WEBSITE_URL);
+        res.redirect(`${process.env.WEBSITE_URL}?reset=success`);
     } catch (error) {
         console.log(error);
-        res.redirect(process.env.WEBSITE_URL);
+        res.redirect(`${process.env.WEBSITE_URL}?reset=failure`);
     }
 }
 
