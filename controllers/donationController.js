@@ -113,45 +113,87 @@ export const fetchAllDonations = async (req, res) => {
             dateFrom,
             dateTo,
             page = 1,
-            limit = 20
+            limit = 10
         } = req.body;
+
+        console.log('Request body:', req.body);
 
         // Remove empty strings from the request body
         Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
 
         let query = {};
 
-        if (templeName) query.templeName = { $regex: templeName, $options: 'i' };
-        if (payId) query.razorpay_payment_id = payId;
-        if (templeCreatedBy) query['createdBy.name'] = { $regex: templeCreatedBy, $options: 'i' };
-        if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
-        if (paymentMethod) query.method = paymentMethod;
-        if (isAnonymous) query.isAnonymous = isAnonymous;
-        if (dateFrom) query.created_at = { $gte: new Date(dateFrom) };
-        if (dateTo) {
-            if (!query.created_at) query.created_at = {};
-            query.created_at.$lte = new Date(dateTo);
-        }
-
         const existingTemples = await Temple.find({}).select('_id').select('-images').select('-pendingChanges');
         const existingTempleIds = existingTemples.map(temple => temple._id);
 
+        if (templeName) {
+            const temples = await Temple.find({ templeName: { $regex: templeName, $options: 'i' } }).select('_id').exec();
+            const templeIds = temples.map(temple => temple._id);
+            query.temple = { $in: templeIds };
+        } else {
+            query.temple = { $in: existingTempleIds };
+        }
+
+        if (templeCreatedBy) {
+            const temples = await Temple.find({ createdBy: templeCreatedBy }).select('_id').exec();
+            const templeIds = temples.map(temple => temple._id);
+
+            if (templeName) {
+
+                query.temple.$in = query.temple.$in.filter(id => templeIds.includes(id));
+            } else {
+
+                query.temple = { $in: templeIds };
+            }
+        }
+
+        if (payId) query.razorpay_payment_id = payId;
+
+        if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
+        if (paymentMethod) query.method = paymentMethod;
+        if (isAnonymous) query.isAnonymous = isAnonymous;
+        if (dateFrom) query.date = { $gte: new Date(dateFrom) };
+        if (dateTo) {
+            if (!query.date) query.created_at = {};
+            query.date.$lte = new Date(dateTo);
+        }
+
+
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+
+
         // Fetch all donations from the database
-        const donations = await Donation.find({ ...query, temple: { $in: existingTempleIds } })
+        const donations = await Donation.find({ ...query })
             .sort({ date: -1 })
+            .skip(skip)
             .limit(limit)
-            .skip((page - 1) * limit)
             .populate('temple')
             .exec();
 
         res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations });
 
     } catch (error) {
-        console.error('Error fetching payments:', error);
-        res.status(500).send({ success: false, message: 'Error fetching payments' });
+        console.error('Error fetching donations:', error);
+        res.status(500).send({ success: false, message: 'Error fetching donations' });
     }
 };
 
+export const allDonationsExistingPaymentMethod = async (req, res) => {
+
+    try {
+
+        const donations = await Donation.find({})
+        const paymentMethods = Array.from(new Set(donations.map(donation => donation.method).filter(method => method)));
+        res.status(200).json({ success: true, message: 'Methods retrieved successfully', paymentMethods });
+
+    } catch (error) {
+        console.error('Error fetching payments:', error);
+        res.status(500).send({ success: false, message: 'Error fetching payments' });
+    }
+}
 
 export const allDonationsByUser = async (req, res) => {
     try {
@@ -205,58 +247,63 @@ export const allDonationsByAdmin = async (req, res) => {
             paymentMethod,
             dateFrom,
             dateTo,
-            user_id
+            user_id,
+            page = 1,
+            limit = 10
         } = req.body;
 
-
         // Remove empty strings from the request body
-        Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);
+        Object.keys(req.body).forEach(key => {
+            if (req.body[key] === '') {
+                delete req.body[key];
+            }
+        });
 
-        // Set default values for pagination
-        const page = parseInt(req.body.page) || 1; // Default page number is 1
-        const limit = req.body.limit ? req.body.limit : 20; // Default limit is 20 temples per page
+
 
         let query = {};
 
-        if (templeName) query.templeName = { $regex: templeName, $options: 'i' };
+        // Fetch temples created by the admin
+        const userTemples = await Temple.find({ createdBy: user_id }).select('_id').select('templeName').exec();
+        const userTempleIds = userTemples.map(temple => temple._id);
 
-        if (payId) query.razorpay_payment_id = payId;
-
-
-        if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
-
-        if (paymentMethod) query.method = paymentMethod;
-
-        if (dateFrom) query.created_at = { $gte: new Date(dateFrom) };
-
-        if (dateTo) {
-            if (!query.created_at) query.created_at = {};
-            query.created_at.$lte = new Date(dateTo);
+        // Add temple filter based on admin's temples
+        if (templeName) {
+            const matchingTemples = await Temple.find({
+                templeName: { $regex: templeName, $options: 'i' },
+                createdBy: user_id
+            }).select('_id').exec();
+            const matchingTempleIds = matchingTemples.map(temple => temple._id);
+            query.temple = { $in: matchingTempleIds };
+        } else {
+            // Use only the admin's temples if no specific templeName is provided
+            query.temple = { $in: userTempleIds };
         }
 
+        // Apply other filters
+        if (payId) query.razorpay_payment_id = payId;
+        if (donateUser) query['donateUser.name'] = { $regex: donateUser, $options: 'i' };
+        if (paymentMethod) query.method = paymentMethod;
+        if (dateFrom) query.date = { $gte: new Date(dateFrom) };
+        if (dateTo) {
+            if (!query.date) query.created_at = {};
+            query.date.$lte = new Date(dateTo);
+        }
+        console.log(query)
 
-
-        const temples = await Temple.find({ 'createdBy': user_id });
-        // console.log(temples)
-
-        query['temple'] = { $in: temples.map(t => t._id) };
-
-        // Fetch all donations from the database
+        // Fetch donations based on the constructed query
         const donations = await Donation.find(query)
             .sort({ date: -1 })
             .limit(limit)
             .skip((page - 1) * limit);
 
-        // Fetch all donations from Razorpay
-
-        res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations });
-
-
+        res.status(200).json({ success: true, message: 'Donations retrieved successfully', donations, temples: userTemples });
     } catch (error) {
-        console.error('Error fetching payments:', error);
-        res.status(500).send({ success: false, message: 'Error fetching payments' });
+        console.error('Error fetching donations:', error);
+        res.status(500).send({ success: false, message: 'Error fetching donations' });
     }
 };
+
 
 
 export const request80Certificate = async (req, res) => {

@@ -9,7 +9,8 @@ import {
     allDonationsByAdmin,
     upload80Certificate,
     update80Certificate,
-    donationInLast30Days
+    donationInLast30Days,
+    allDonationsExistingPaymentMethod
 } from '../controllers/donationController.js';
 import { isSignin } from '../middlewares/authMiddleware.js';
 import pdfUpload from '../config/pdfMulter.js';
@@ -35,6 +36,8 @@ router.post('/upload-80-certificate', upload80Certificate);
 router.put('/update-80-certificate', update80Certificate);
 
 router.get('/fetch-donation-last-30-days', donationInLast30Days);
+
+router.get('/fetch-payment-methods', allDonationsExistingPaymentMethod)
 
 
 export default router;
