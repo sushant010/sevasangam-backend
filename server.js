@@ -43,7 +43,12 @@ app.use(express.static(buildPath));
 
 // middleware
 
-app.use(cors())
+app.use(cors({
+    origin: 'https://sevasangam.com',
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: 'Content-Type,Authorization'
+}));
+
 // use to send json data
 app.use(express.json())
 // use to get info about requests
