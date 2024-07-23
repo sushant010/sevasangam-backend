@@ -41,6 +41,14 @@ const __dirname = path.dirname("");
 const buildPath = path.join(__dirname, '../sevasangam-frontend/build');
 app.use(express.static(buildPath));
 
+app.use((req, res, next) => {
+    if (req.secure) {
+        return next();
+    }
+    res.redirect('https://' + req.headers.host + req.url);
+});
+
+
 // middleware
 
 app.use(cors({
@@ -54,12 +62,6 @@ app.use(express.json())
 // use to get info about requests
 app.use(morgan('dev'))
 
-app.use((req, res, next) => {
-    if (req.secure) {
-        return next();
-    }
-    res.redirect('https://' + req.headers.host + req.url);
-});
 
 
 
