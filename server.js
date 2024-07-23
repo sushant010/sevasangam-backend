@@ -73,6 +73,11 @@ const PORT = process.env.PORT || 8080;
 
 
 // routes
+
+app.use('/api/v1/test', (req, res) => {
+    res.send('Hello World')
+})
+
 app.use('/api/v1/auth', authRoute)
 
 app.use('/api/v1/temple', templeRoute);
