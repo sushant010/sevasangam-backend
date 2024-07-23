@@ -49,6 +49,13 @@ app.use(express.json())
 // use to get info about requests
 app.use(morgan('dev'))
 
+app.use((req, res, next) => {
+    if (req.secure) {
+        return next();
+    }
+    res.redirect('https://' + req.headers.host + req.url);
+});
+
 
 
 // app.use(express.static(path.join(__dirname, './client/build')));
