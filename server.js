@@ -41,27 +41,20 @@ const __dirname = path.dirname("");
 const buildPath = path.join(__dirname, '../sevasangam-frontend/build');
 app.use(express.static(buildPath));
 
+// middleware
+
+app.use(cors())
+// use to send json data
+app.use(express.json())
+// use to get info about requests
+app.use(morgan('dev'))
+
 app.use((req, res, next) => {
     if (req.secure) {
         return next();
     }
     res.redirect('https://' + req.headers.host + req.url);
 });
-
-
-// middleware
-
-app.use(cors({
-    origin: 'https://sevasangam.com',
-    methods: 'GET,POST,PUT,DELETE',
-    allowedHeaders: 'Content-Type,Authorization'
-}));
-
-// use to send json data
-app.use(express.json())
-// use to get info about requests
-app.use(morgan('dev'))
-
 
 
 
@@ -73,11 +66,6 @@ const PORT = process.env.PORT || 8080;
 
 
 // routes
-
-app.use('/api/v1/test', (req, res) => {
-    res.send('Hello World')
-})
-
 app.use('/api/v1/auth', authRoute)
 
 app.use('/api/v1/temple', templeRoute);
