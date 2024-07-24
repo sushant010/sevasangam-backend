@@ -57,10 +57,10 @@ app.use(morgan('dev'))
 
 const PORT = process.env.PORT || 8080;
 
-app.set('trust proxy', true);
+
 
 // routes
-app.get('/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
     res.status(200).send('OK');
 });
 
