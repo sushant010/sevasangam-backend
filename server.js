@@ -49,13 +49,6 @@ app.use(express.json())
 // use to get info about requests
 app.use(morgan('dev'))
 
-app.use((req, res, next) => {
-    if (req.secure) {
-        return next();
-    }
-    res.redirect('https://' + req.headers.host + req.url);
-});
-
 
 
 // app.use(express.static(path.join(__dirname, './client/build')));
@@ -64,6 +57,7 @@ app.use((req, res, next) => {
 
 const PORT = process.env.PORT || 8080;
 
+app.set('trust proxy', true);
 
 // routes
 app.use('/api/v1/auth', authRoute)
