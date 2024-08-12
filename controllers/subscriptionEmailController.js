@@ -12,7 +12,7 @@ export const subscribe = async (req, res) => {
       return res.status(400).json({ message: "Email already subscribed" });
     }
     const subscriptionEmail = new subscriptionEmailModel({
-      email,
+      email, createdAt: new Date()
     });
     await subscriptionEmail.save();
     res.status(201).json({ message: "Email subscribed" });

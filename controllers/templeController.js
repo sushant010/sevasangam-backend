@@ -9,12 +9,13 @@ export const createTemple = async (req, res) => {
   try {
     const { body } = req;
 
-    const { templeName, location, bankDetails, contactPerson } = body;
+    const { templeName, location, bankDetails, contactPerson, aboutTemple2, aboutTemple1 } = body;
     const { address } = location;
 
 
-    if (!templeName || !address) {
-      return res.status(200).send({ success: false, message: 'Temple name and address are required' });
+    // Validate required fields
+    if (!templeName || !address || !aboutTemple2 || !aboutTemple1) {
+      return res.status(200).send({ success: false, message: 'All required fields must be provided' });
     }
 
     const existingTemple = await Temple.findOne({
@@ -414,9 +415,10 @@ export const getUnverifiedUpdatedByAdminTemples = async (req, res) => {
 export const verifyTemple = async (req, res) => {
   try {
     const { id } = req.params;
-    const temple = await Temple.findById(id).select('_id');
+    const temple = await Temple.findById(id).select('-images');
     if (temple.pendingChanges) {
       // Apply pending changes
+      console.log(temple.pendingChanges);
       Object.assign(temple, temple.pendingChanges, { pendingChanges: null });
     }
 

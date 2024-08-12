@@ -348,11 +348,14 @@ export const upload80Certificate = async (req, res) => {
 
         // Find the donation by ID and update it with the certificate path
         const donation = await Donation.findByIdAndUpdate(
-            { _id: id },
-            { certificate: certificate },
-            { is80CertificateRequested: false },
+            id,
+            {
+                certificate: certificate,
+                is80CertificateRequested: false
+            },
             { new: true }
         );
+
 
 
         if (!donation) {
@@ -375,8 +378,10 @@ export const update80Certificate = async (req, res) => {
         // Find the donation by ID and update it with the new certificate path
         const donation = await Donation.findOneAndUpdate(
             { _id: id },
-            { is80CertificateRequested: false },
-            { certificate: certificate },
+            {
+                certificate: certificate,
+                is80CertificateRequested: false
+            },
             { new: true }
         );
 
