@@ -214,7 +214,7 @@ export const forgotPassword = async (req, res) => {
         const sendLinkTo = email;
 
         if (!oldUser) {
-            return res.status(400).send({ message: 'Missing required fields' });
+            return res.status(400).send({ message: 'No user exists with this email' });
         }
 
         const token = JWT.sign({ email: oldUser.email, id: oldUser._id }, process.env.JWT_SECRET, {
