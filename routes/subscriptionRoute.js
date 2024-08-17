@@ -10,7 +10,7 @@ router.post('/create-subscription', createSubscription);
 
 router.post('/fetch-all-subscription-by-admin', fetchAllSubscriptionByAdmin);
 
-router.get('/fetch-all-subscription', fetchAllSubscription);
+router.post('/fetch-all-subscription', fetchAllSubscription);
 
 
 export default router;

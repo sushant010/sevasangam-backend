@@ -74,12 +74,14 @@ export const createSubscription = async (req, res) => {
 
 export const fetchAllSubscriptionByAdmin = async (req, res) => {
     try {
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.body.page) || 1;
+        const skip = (page - 1) * limit;
 
         const { id } = req.body;
-
-        const user = await userModel.findById(id);
+        // const user = await userModel.findById(id);
         const temples = await Temple.find({ createdBy: id });
-        const subscriptions = await Subscription.find({ temple: { $in: temples } }).sort({ date: -1 });
+        const subscriptions = await Subscription.find({ temple: { $in: temples } }).skip(skip).limit(limit).sort({ date: -1 });
         res.status(200).json({ success: true, subscriptions });
 
     } catch (error) {
@@ -91,8 +93,10 @@ export const fetchAllSubscriptionByAdmin = async (req, res) => {
 
 export const fetchAllSubscription = async (req, res) => {
     try {
-
-        const subscriptions = await Subscription.find().sort({ date: -1 });
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const skip = (page - 1) * limit;
+        const subscriptions = await Subscription.find().skip(skip).limit(limit).sort({ date: -1 });
         res.status(200).json({ success: true, subscriptions });
 
     } catch (error) {

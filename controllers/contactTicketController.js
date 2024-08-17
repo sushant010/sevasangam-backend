@@ -32,7 +32,7 @@ export const getAllContactTickets = async (req, res) => {
   try {
     const { email, title, message, status } = req.body;
 
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.body.page) || 1;
 
     Object.keys(req.body).forEach(key => req.body[key] === '' && delete req.body[key]);

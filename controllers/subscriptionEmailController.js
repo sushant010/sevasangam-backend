@@ -24,8 +24,13 @@ export const subscribe = async (req, res) => {
 
 export const getallSubscriptionEmails =
   async (req, res) => {
+
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
     try {
-      const subscriptionEmails = await subscriptionEmailModel.find();
+      const subscriptionEmails = await subscriptionEmailModel.find().skip(skip).limit(Number(limit));
+
       res.status(200).json(subscriptionEmails);
     } catch (error) {
       console.log(error);

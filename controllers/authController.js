@@ -109,7 +109,10 @@ export const allUsersController = async (req, res) => {
 
 export const allTempleAdminsController = async (req, res) => {
     try {
-        const users = await userModel.find({ role: 1, totalTempleCreated: { $gt: 0 } });
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.body.page) || 1;
+        const skip = (page - 1) * limit;
+        const users = await userModel.find({ role: 1, totalTempleCreated: { $gt: 0 } }).skip(skip).limit(limit);
         if (!users) return res.send({ message: 'No users exists' })
         return res.status(200).send({ success: true, message: 'users fetched successfully', users })
     } catch (error) {
