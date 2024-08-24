@@ -243,6 +243,7 @@ export const forgotPassword = async (req, res) => {
                     <h2 style="color: #ff395c; text-align: center;">Sevasangam Password Reset</h2>
                     <p>Hello,</p>
                     <p>You have requested to reset your password. Please click the button below to reset your password:</p>
+                          <p>Note : Link is valid for 5 minutes.</p>
                     <a href="${link}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; font-size: 16px; color: white; background-color: #ff395c; border: none; border-radius: 5px; text-decoration: none;">Reset Password</a>
                     <p>If you did not request this password reset, please ignore this email or contact support if you have questions.</p>
                     <p>Thank you,</p>
