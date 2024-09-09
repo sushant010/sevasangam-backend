@@ -60,7 +60,7 @@ export const registerController = async (req, res) => {
         const hashedPassword = await hashPassword(password);
         const user = await new userModel({ name, email, password: hashedPassword, phone, avatar }).save();
         const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        return res.status(201).send({ success: true, message: 'Your Account is created successfully!', user, token })
+        return res.status(201).send({ success: true, message: 'Your account is created successfully!', user, token })
 
     } catch (error) {
         console.log(error)
