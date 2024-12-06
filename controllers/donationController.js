@@ -11,12 +11,14 @@ import send80GformRequestToSuperAdmin from "./../email/functions/80G-form/send80
 import Subscription from '../models/subscriptionModel.js';
 import sendDonationAcknowledgementToDonateUser from '../email/functions/sendDonationAcknowledgementToDonateUser.js';
 dotenv.config();
-var instance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
+var instance = new Razorpay({ 
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET })
 
 
 export const checkout = async (req, res) => {
 
-    const { amount, donateUser } = req.body;
+    const { amount, donateUser ,} = req.body;
     const { name, email, phone } = donateUser;
     // console.log(req.body)
 
@@ -34,6 +36,17 @@ export const checkout = async (req, res) => {
     var options = {
         amount: Number(amount * 100),
         currency: "INR",
+        transfers:[
+            {
+                account: 'LinkedAccount01',
+                amount: Number(amount*100*0.8),
+                currency: "INR",
+                notes:{
+                    note: '80% money transfered to temple',
+                },
+            },
+        ],
+
     };
 
     const order = await instance.orders.create(options);
