@@ -36,16 +36,6 @@ export const checkout = async (req, res) => {
     var options = {
         amount: Number(amount * 100),
         currency: "INR",
-        transfers:[
-            {
-                account: 'LinkedAccount01',
-                amount: Number(amount*100*0.8),
-                currency: "INR",
-                notes:{
-                    note: '80% money transfered to temple',
-                },
-            },
-        ],
 
     };
 
@@ -74,6 +64,20 @@ export const paymentVerification = async (req, res) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
+
+        // Transfer 80% to the linked account
+        await instance.payments.transfer(razorpay_payment_id, {
+            transfers: [
+            {
+                account: "LinkedAccount01", //account id of the temple to whom payment is made
+                amount: Number(amount * 100 * 0.8), // 80% of the amount
+                currency: "INR",
+                notes: {
+                note: "80% money transferred to temple",
+                },
+            },
+            ],
+        });
 
         // Fetch all payments from Razorpay
         const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
