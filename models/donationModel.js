@@ -32,6 +32,18 @@ const donationSchema = new Schema({
         type: String,
         required: true,
     },
+
+    serviceFee: {
+        type: Number,
+        required: false,
+    },
+
+    templeFee: {
+        type: Number,
+        required: false,
+
+    },
+
     temple: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Temple',

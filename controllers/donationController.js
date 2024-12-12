@@ -51,7 +51,6 @@ export const checkout = async (req, res) => {
 
 
 export const paymentVerification = async (req, res) => {
-
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -64,56 +63,83 @@ export const paymentVerification = async (req, res) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
+        try {
+            // Fetch all payments from Razorpay
+            const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
+            const temple_acc = await Temple.findById(razorPayDonation.notes.temple);
+            console.log(razorPayDonation);
 
-        // Transfer 80% to the linked account
-        await instance.payments.transfer(razorpay_payment_id, {
-            transfers: [
-            {
-                account: "LinkedAccount01", //account id of the temple to whom payment is made
-                amount: Number(amount * 100 * 0.8), // 80% of the amount
-                currency: "INR",
-                notes: {
-                note: "80% money transferred to temple",
-                },
-            },
-            ],
-        });
+            //transfer 80% to the temple account
+            // try {
+            //     await instance.payments.transfer(razorpay_payment_id, {
+            //         transfers: [
+            //             {
+            //                 account: temple_acc.bankDetails.routingNumber, // Replace with the correct temple account ID
+            //                 amount: razorPayDonation.amount * 0.80, // 80% of the donation amount
+            //                 currency: "INR",
+            //                 notes: {
+            //                     note: "80% money transferred to temple",
+            //                 },
+            //             },
+            //         ],
+            //     });
+            // } catch (transferError) {
+            //     console.error("Error during payment transfer:", transferError);
+            //     return res.status(500).json({
+            //         success: false,
+            //         message: "Error during the payment transfer. Please try again later.",
+            //         error: transferError.message,
+            //     });
+            // }
 
-        // Fetch all payments from Razorpay
-        const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
-        console.log(razorPayDonation)
-
-        const donation = new Donation(
-            {
+            // Save donation details in the database
+            const donation = new Donation({
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature,
-                amount: razorPayDonation.amount / 100,
+                amount: razorPayDonation.amount / 100, // this is temporary until transfer is tested
                 status: razorPayDonation.status,
                 donateUser: razorPayDonation.notes.donateUser,
                 temple: razorPayDonation.notes.temple,
                 method: razorPayDonation.method,
+                templeFee: razorPayDonation.amount *0.80 /100, // this is temporary until transfer is tested
+                serviceFee: razorPayDonation.amount *0.20 /100, // this is temporary until transfer is tested
                 currency: razorPayDonation.currency,
-                isAnonymous: razorPayDonation?.notes?.anonymous == 'false' ? false : true,
-            }
-        );
+                isAnonymous: razorPayDonation?.notes?.anonymous === 'false' ? false : true,
+            });
 
-        await donation.save();
+            await donation.save();
 
-        const temple = await Temple.findById(razorPayDonation.notes.temple);
-        temple.donation += razorPayDonation.amount / 100;
-        await temple.save();
-        const name = JSON.parse(razorPayDonation.notes.donateUser).name;
-        const userEmail = JSON.parse(razorPayDonation.notes.donateUser).email;
+            // Update temple's donation balance
+            const temple = await Temple.findById(razorPayDonation.notes.temple);
+            temple.donation += razorPayDonation.amount * 0.80 / 100; // Adding the 80% of the amount to the temple's total donation
+            await temple.save();
 
-        sendDonationAcknowledgementToDonateUser(userEmail, name, razorpay_payment_id, temple.templeName, razorPayDonation.amount / 100, razorPayDonation.currency, razorPayDonation.method, razorPayDonation.created_at);
+            // Sending acknowledgment email to the user
+            const name = JSON.parse(razorPayDonation.notes.donateUser).name;
+            const userEmail = JSON.parse(razorPayDonation.notes.donateUser).email;
 
-        res.redirect(`${process.env.WEBSITE_URL}/temples`);
+            sendDonationAcknowledgementToDonateUser(
+                userEmail,
+                name,
+                razorpay_payment_id,
+                temple.templeName,
+                razorPayDonation.amount / 100,
+                razorPayDonation.currency,
+                razorPayDonation.method,
+                razorPayDonation.created_at
+            );
 
+            // Redirect to temples page after success
+            res.redirect(`${process.env.WEBSITE_URL}/temples`);
+        } catch (error) {
+            console.error("Error during payment verification:", error);
+            res.status(500).send({ success: false, message: 'Error during payment verification!', error: error.message });
+        }
     } else {
         res.status(500).send({ success: false, message: 'Error in payment verification!' });
     }
-}
+};
 
 
 
@@ -262,6 +288,8 @@ export const allDonationsByAdmin = async (req, res) => {
             payId,
             donateUser,
             paymentMethod,
+            serviceFee,
+            templeFee,
             dateFrom,
             dateTo,
             user_id,

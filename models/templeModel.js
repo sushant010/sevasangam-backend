@@ -93,7 +93,7 @@ const templeSchema = new Schema({
         accountHolderName: { type: String, required: true },
         accountNumber: { type: String, required: true },
         ifscCode: { type: String, required: true },
-        routingNumber: { type: String, required: false },
+        routingNumber: { type: String, required: false }, //must be set to true once routing number is obtained
         swiftBicCode: { type: String, required: false }
     },
     taxInformation: {
