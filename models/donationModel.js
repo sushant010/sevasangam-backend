@@ -24,6 +24,10 @@ const donationSchema = new Schema({
         type: String,
         required: true,
     },
+    transferStatus:{
+        type: String,
+        required: false, //must be set to true later
+    },
     currency: {
         type: String,
         required: true,
