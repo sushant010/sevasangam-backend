@@ -149,6 +149,7 @@ export const paymentVerification = async (req, res) => {
                 name,
                 razorpay_payment_id,
                 temple.templeName,
+                transferredAmount,
                 razorPayDonation.amount / 100,
                 razorPayDonation.currency,
                 razorPayDonation.method,
