@@ -6,7 +6,7 @@ import { configDotenv } from "dotenv";
 
 configDotenv();
 
-const sendDonationAcknowledgementToDonateUser = async (userEmail, name, razorpay_payment_id, templeName,transferAmount, donationAmount, currency, method, donationDate) => {
+const sendDonationAcknowledgementToDonateUser = async (userEmail, name, razorpay_payment_id, templeName, donationAmount, currency, method, donationDate) => {
     const templatePath = path.join(
         path.resolve(),
         "/email/templates/sendDonationAcknowledgementToDonateUserTemplate.ejs"
@@ -21,10 +21,8 @@ const sendDonationAcknowledgementToDonateUser = async (userEmail, name, razorpay
         html: ejs.render(template, {
             name: name,
             razorpay_payment_id: razorpay_payment_id,
-            templeName: templeName,
-            PlatformFee: donationAmount-transferAmount,            
-            donationAmount: transferAmount,
-            TotalAmount: donationAmount,
+            templeName: templeName,            
+            donationAmount: donationAmount,
             donationCurrency: currency,
             donationMethod: method,
             donationDate: new Date(donationDate * 1000).toDateString(),
