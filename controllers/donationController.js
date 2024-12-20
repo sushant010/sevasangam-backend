@@ -70,51 +70,47 @@ export const paymentVerification = async (req, res) => {
             console.log(razorPayDonation);
 
             let transferredAmount = 0;
+            let transferStatus= "failed";
+            let templeShare= 0.90; //percentage of payment transferred to temple 0.90 means 90 percent
+
 
             //transfer money to temple
+            //currently this is Transfer via Payments the final intention is to use Transfer via Order by using a webhook
+            //Transfer Via Order will elliminate extra step of checking payment status and then create a transfer.instead it will initate a transfer on order creation.
 
-            // try {
-            //     // Perform the transfer
-            //     const transferResponse = await instance.payments.transfer(razorpay_payment_id, {
-            //         transfers: [
-            //             {
-            //                 account: temple_acc.bankDetails.routingNumber, // Replace with the correct temple account ID
-            //                 amount: razorPayDonation.amount * 0.80, // 80% of the donation amount
-            //                 currency: "INR",
-            //                 notes: {
-            //                     note: "80% money transferred to temple",
-            //                 },
-            //             },
-            //         ],
-            //     });
+            try {
+                // Perform the transfer
+                const transferResponse = await instance.payments.transfer(razorpay_payment_id, {
+                    transfers: [
+                        {
+                            account: temple_acc.bankDetails.routingNumber, // Replace with the correct temple account ID
+                            amount: razorPayDonation.amount * templeShare, // 80% of the donation amount
+                            currency: "INR",
+                            notes: {
+                                note: "80% money transferred to temple",
+                            },
+                        },
+                    ],
+                });
 
-            //     // Fetch transfer details to confirm the status
-            //     const transferId = transferResponse.id; // Capture the transfer ID
-            //     const transferDetails = await instance.transfers.fetch(transferId);
+                // Fetch transfer details to confirm the status
+                const transferId = transferResponse.items[0].id; // Capture the transfer ID
+                const transferDetails = await instance.transfers.fetch(transferId);
 
-            //     // Check if transfer was successful
-            //     if (transferDetails.status === "completed") {
-            //         transferredAmount = transferDetails.amount / 100; // Convert from paise to INR
-            //         console.log(`Transferred Amount: ₹${transferredAmount}`);
-            //     } else {
-            //         console.warn("Transfer not completed successfully. Setting transferredAmount to 0.");
-            //     }
-            // } catch (transferError) {
-            //     // Log the error but do not throw it
-            //     console.error("Error during payment transfer:", transferError.message);
-            //     console.warn("Transfer failed. Setting transferredAmount to 0.");
-            // }
-
-            // // Return a response regardless of success or failure
-            // return res.status(200).json({
-            //     success: transferredAmount > 0,
-            //     message: transferredAmount > 0
-            //         ? "Payment transfer successful."
-            //         : "Payment transfer not completed successfully or an error occurred.",
-            //     transferredAmount,
-            // });
-
-            
+                // Check if transfer was successful
+                if (transferDetails.status === "pending") {
+                    transferredAmount = transferDetails.amount / 100; // Convert from paise to INR
+                    transferStatus= transferDetails.status;
+                    console.log(`Transferred Amount: ₹${transferredAmount}`);
+                } else {
+                    console.warn("Transfer not completed successfully. Setting transferredAmount to 0.");
+                }
+            } catch (transferError) {
+                // Log the error but do not throw it
+                console.error("Error during payment transfer:", transferError.message);
+                console.warn("Transfer failed. Setting transferredAmount to 0.");
+            }
+            //end of transfer
 
             // Save donation details in the database
             const donation = new Donation({
@@ -123,7 +119,7 @@ export const paymentVerification = async (req, res) => {
                 razorpay_signature,
                 amount: razorPayDonation.amount / 100,
                 status: razorPayDonation.status,
-                transferStatus: 'failed', //failed is temporary
+                transferStatus: transferStatus, //this is temporary webhook will be used later to shoe if transfer is pending or settled
                 donateUser: razorPayDonation.notes.donateUser,
                 temple: razorPayDonation.notes.temple,
                 method: razorPayDonation.method,
