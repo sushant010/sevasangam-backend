@@ -1,4 +1,5 @@
 import Donation from '../models/donationModel.js';
+import axios from 'axios';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import userModel from '../models/userModel.js';
@@ -15,12 +16,23 @@ var instance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET })
 
+var axiosInstance = axios.create({
+  baseURL: 'https://api.razorpay.com/v1/',
+  auth: {
+    username: process.env.RAZORPAY_KEY_ID,
+    password: process.env.RAZORPAY_KEY_SECRET
+  }
+});
+
 
 export const checkout = async (req, res) => {
 
-    const { amount, donateUser ,} = req.body;
+    const { amount, donateUser , temple} = req.body;
     const { name, email, phone } = donateUser;
     // console.log(req.body)
+
+    const temple_acc = await Temple.findById(temple);
+
 
     let user = await userModel.findOne({ email: email });
 
@@ -32,10 +44,24 @@ export const checkout = async (req, res) => {
         });
         await user.save();
     }
+    
+    let templeShare= 0.90; //percentage of payment transferred to temple 0.90 means 90 percent
+
 
     var options = {
         amount: Number(amount * 100),
         currency: "INR",
+        transfers: [
+                        {
+                            account: temple_acc.bankDetails.routingNumber, // Replace with the correct temple account ID
+                            amount: Number(amount * 100 *templeShare), // n% of the donation amount
+                            currency: "INR",
+                            notes: {
+                                note: "80% money transferred to temple",
+                            },
+                        },
+                    ],
+
 
     };
 
@@ -54,7 +80,6 @@ export const paymentVerification = async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
-
     const expectedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(body.toString())
@@ -66,51 +91,22 @@ export const paymentVerification = async (req, res) => {
         try {
             // Fetch all payments from Razorpay
             const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
-            const temple_acc = await Temple.findById(razorPayDonation.notes.temple);
             console.log(razorPayDonation);
 
-            let transferredAmount = 0;
-            let transferStatus= "failed";
-            let templeShare= 0.90; //percentage of payment transferred to temple 0.90 means 90 percent
+            // check transfer with checkout
+            const transferDetails = await axiosInstance.get(`/orders/${razorpay_order_id}/?expand[]=transfers`);            
+            console.log(transferDetails);
 
+            
+            let transferredAmount = transferDetails.data.transfers.items[0].amount /100;
+            let transferStatus= transferDetails.data.transfers.items[0].status; //must be replaced by a webhook later temporary for now
 
-            //transfer money to temple
-            //currently this is Transfer via Payments the final intention is to use Transfer via Order by using a webhook
-            //Transfer Via Order will elliminate extra step of checking payment status and then create a transfer.instead it will initate a transfer on order creation.
-
-            try {
-                // Perform the transfer
-                const transferResponse = await instance.payments.transfer(razorpay_payment_id, {
-                    transfers: [
-                        {
-                            account: temple_acc.bankDetails.routingNumber, // Replace with the correct temple account ID
-                            amount: razorPayDonation.amount * templeShare, // 80% of the donation amount
-                            currency: "INR",
-                            notes: {
-                                note: "80% money transferred to temple",
-                            },
-                        },
-                    ],
-                });
-
-                // Fetch transfer details to confirm the status
-                const transferId = transferResponse.items[0].id; // Capture the transfer ID
-                const transferDetails = await instance.transfers.fetch(transferId);
-
-                // Check if transfer was successful
-                if (transferDetails.status === "pending") {
-                    transferredAmount = transferDetails.amount / 100; // Convert from paise to INR
-                    transferStatus= transferDetails.status;
-                    console.log(`Transferred Amount: ₹${transferredAmount}`);
-                } else {
-                    console.warn("Transfer not completed successfully. Setting transferredAmount to 0.");
-                }
-            } catch (transferError) {
-                // Log the error but do not throw it
-                console.error("Error during payment transfer:", transferError.message);
-                console.warn("Transfer failed. Setting transferredAmount to 0.");
-            }
-            //end of transfer
+            if (transferStatus === "failed") {
+                        transferredAmount = 0; // Convert from paise to INR
+                        console.warn("Transfer not completed successfully. Setting transferredAmount to 0.");
+                    } else {
+                        console.log(`Transferred Amount: ₹${transferredAmount}`);
+                    }
 
             // Save donation details in the database
             const donation = new Donation({
@@ -119,7 +115,7 @@ export const paymentVerification = async (req, res) => {
                 razorpay_signature,
                 amount: razorPayDonation.amount / 100,
                 status: razorPayDonation.status,
-                transferStatus: transferStatus, //this is temporary webhook will be used later to shoe if transfer is pending or settled
+                transferStatus: transferStatus,
                 donateUser: razorPayDonation.notes.donateUser,
                 temple: razorPayDonation.notes.temple,
                 method: razorPayDonation.method,
@@ -133,7 +129,7 @@ export const paymentVerification = async (req, res) => {
 
             // Update temple's donation balance
             const temple = await Temple.findById(razorPayDonation.notes.temple);
-            temple.donation += transferredAmount; // Adding the 80% of the amount to the temple's total donation
+            temple.donation += transferredAmount; // Adding the n% of the amount to the temple's total donation
             await temple.save();
 
             // Sending acknowledgment email to the user
@@ -145,7 +141,6 @@ export const paymentVerification = async (req, res) => {
                 name,
                 razorpay_payment_id,
                 temple.templeName,
-                transferredAmount,
                 razorPayDonation.amount / 100,
                 razorPayDonation.currency,
                 razorPayDonation.method,
