@@ -27,11 +27,13 @@ var axiosInstance = axios.create({
 
 export const checkout = async (req, res) => {
 
-    const { amount, donateUser , temple} = req.body;
+    const { amount, donateUser , temple, custpercentage,selectpercentage} = req.body;
     const { name, email, phone } = donateUser;
     // console.log(req.body)
 
-    const temple_acc = await Temple.findById(temple);
+    
+
+    const temple_acc = await Temple.findById(temple);// temple id 
 
 
     let user = await userModel.findOne({ email: email });
@@ -44,8 +46,8 @@ export const checkout = async (req, res) => {
         });
         await user.save();
     }
-    
-    let templeShare= 0.90; //percentage of payment transferred to temple 0.90 means 90 percent
+    let platformShare= custpercentage||selectpercentage;
+    let templeShare= (100-platformShare)/100; //percentage of payment transferred to temple 0.90 means 90 percent
 
 
     var options = {
@@ -61,8 +63,6 @@ export const checkout = async (req, res) => {
                             },
                         },
                     ],
-
-
     };
 
     const order = await instance.orders.create(options);
@@ -93,11 +93,11 @@ export const paymentVerification = async (req, res) => {
             const razorPayDonation = await instance.payments.fetch(razorpay_payment_id);
             console.log(razorPayDonation);
 
-            // check transfer with checkout
+            // Fetch transfer for an order
             const transferDetails = await axiosInstance.get(`/orders/${razorpay_order_id}/?expand[]=transfers`);            
             console.log(transferDetails);
 
-            
+            // check transfer on checkout
             let transferredAmount = transferDetails.data.transfers.items[0].amount /100;
             let transferStatus= transferDetails.data.transfers.items[0].status; //must be replaced by a webhook later temporary for now
 

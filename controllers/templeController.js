@@ -331,7 +331,6 @@ export const getTempleByName = async (req, res) => {
 };
 
 
-
 // Delete a temple by ID
 export const deleteTempleById = async (req, res) => {
   try {
