@@ -148,7 +148,7 @@ export const paymentVerification = async (req, res) => {
             );
 
             // Redirect to temples page after success
-            res.redirect(`${process.env.WEBSITE_URL}/temples`);
+            res.redirect(`${process.env.WEBSITE_URL}/user/past-donations`);
         } catch (error) {
             console.error("Error during payment verification:", error);
             res.status(500).send({ success: false, message: 'Error during payment verification!', error: error.message });
