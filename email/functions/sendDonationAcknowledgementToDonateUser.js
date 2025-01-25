@@ -21,7 +21,7 @@ const sendDonationAcknowledgementToDonateUser = async (userEmail, name, razorpay
         html: ejs.render(template, {
             name: name,
             razorpay_payment_id: razorpay_payment_id,
-            templeName: templeName,
+            templeName: templeName,            
             donationAmount: donationAmount,
             donationCurrency: currency,
             donationMethod: method,

@@ -24,6 +24,10 @@ const donationSchema = new Schema({
         type: String,
         required: true,
     },
+    transferStatus:{
+        type: String,
+        required: false, //must be set to true later
+    },
     currency: {
         type: String,
         required: true,
@@ -32,6 +36,18 @@ const donationSchema = new Schema({
         type: String,
         required: true,
     },
+
+    serviceFee: {
+        type: Number,
+        required: false,
+    },
+
+    templeFee: {
+        type: Number,
+        required: false,
+
+    },
+
     temple: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Temple',
